@@ -13,6 +13,7 @@
 #include "server.hpp"
 #include <cerrno>
 
+//Transmission Control Protocol
 
 int server::setup()
 {
@@ -44,7 +45,41 @@ int server::setup()
 		close(this->_socketfd);
 		return -1;
 	}
+
+	//acept() is used to accept a connection on a socket
+	// It blocks until a connection is made, then returns a new socket file descriptor for the connection
+	socklen_t addrlen = sizeof(this->_addr);
+	int connection = accept(this->_socketfd, (struct sockaddr *)&this->_addr, &addrlen);
 	
+	// Check if accept() was successful
+	// If it returns -1, an error occurred
+	if (connection < 0)
+	{
+		std::cerr << "Error accepting connection: " << strerror(errno) << std::endl;
+		close(this->_socketfd);
+		return -1;
+	}
+
+	//receive data from the client
+	char buffer[100];
+	ssize_t bytesRead = read(connection, buffer, 100);
+	(void)bytesRead; // Ignore the return value for now
+	//print the received message from the client
+	std::cout << "The message was: " << buffer << std::endl;
+
+	//send a response back to the client
+	std::string response = 
+		"HTTP/1.1 200 OK\r\n"
+		"Content-Length: 19\r\n"
+		"Content-Type: text/plain\r\n"
+		"\r\n"
+		"Hello from server!\n";
+	send(connection, response.c_str(), response.size(), 0);
+
+	close(connection); // Close the connection socket
+	close(this->_socketfd); // Close the server socket
+
+
 	return 0; // 
 }
 
@@ -58,8 +93,16 @@ server::~server()
 
 server::server(const server &other)
 {	
+	this->_socketfd = other._socketfd;
+	this->_addr = other._addr;
 }
 server &server::operator=(const server &other)
 {
+	if (this != &other)
+	{
+		this->_socketfd = other._socketfd;
+		this->_addr = other._addr;
+	}
+	return *this;
 }
 
