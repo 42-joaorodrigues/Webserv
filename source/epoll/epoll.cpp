@@ -6,7 +6,7 @@
 /*   By: nacao <nacao@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/06 14:53:35 by naiqing           #+#    #+#             */
-/*   Updated: 2025/08/07 16:16:36 by nacao            ###   ########.fr       */
+/*   Updated: 2025/08/07 17:10:47 by nacao            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,8 +20,7 @@ void initEpollEvent(struct epoll_event *event, uint32_t events, int fd)
 }
 
 void initConnection(Socket &socket, int i)
-{
-    
+{   
 }
 
 int createSocketEpoll(Socket &socket)
