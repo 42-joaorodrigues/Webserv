@@ -17,7 +17,7 @@ class server
 		server(const server &other);
 		server &operator=(const server &other);
 
-		int setup();
+		int initsocket();
 		
 };
 

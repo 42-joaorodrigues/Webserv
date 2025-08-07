@@ -11,8 +11,6 @@
 /* ************************************************************************** */
 
 #include "webserv.hpp"
-#include "../server/server.hpp"
-
 
 int main(int argc, char *argv[]) {
 	
@@ -21,7 +19,7 @@ int main(int argc, char *argv[]) {
 	std::cout << "Webserv is starting..." << std::endl;
 
 	server myServer;
-	if (myServer.setup() < 0)
+	if (myServer.initsocket() < 0)
 	{
 		std::cerr << "Failed to set up the server." << std::endl;
 		return EXIT_FAILURE;

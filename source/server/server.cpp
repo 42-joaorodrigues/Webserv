@@ -6,7 +6,7 @@
 /*   By: naiqing <naiqing@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/25 15:59:01 by naiqing           #+#    #+#             */
-/*   Updated: 2025/07/26 11:25:20 by naiqing          ###   ########.fr       */
+/*   Updated: 2025/08/06 15:11:57 by naiqing          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,7 @@
 
 //Transmission Control Protocol
 
-int server::setup()
+int server::initsocket()
 {
 	this->_socketfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (this->_socketfd < 0) {
