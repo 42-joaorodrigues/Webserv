@@ -1,30 +1,25 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   epoll.hpp                                          :+:      :+:    :+:   */
+/*   config.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: nacao <nacao@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/08/06 14:53:33 by naiqing           #+#    #+#             */
-/*   Updated: 2025/08/07 16:25:30 by nacao            ###   ########.fr       */
+/*   Created: 2025/08/07 14:06:04 by nacao             #+#    #+#             */
+/*   Updated: 2025/08/07 16:25:00 by nacao            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef EPOLL_HPP
-#define EPOLL_HPP
+#ifndef CONFIG_HPP
+#define CONFIG_HPP
 
 #include "../../include/webserv.hpp"
 
-class Epoll
+
+
+class Config
 {
-    private:
-        int _epollfd; // File descriptor for the epoll instance
-
-    public:
-        int initEpoll(Socket &socket);;
-        Epoll(/* args */);
-        ~Epoll();
+    
 };
-
 
 #endif

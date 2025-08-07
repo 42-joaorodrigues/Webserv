@@ -10,7 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "webserv.hpp"
+#include "../include/webserv.hpp"
 
 int main(int argc, char *argv[]) {
 	
@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
 	(void)argv;
 	std::cout << "Webserv is starting..." << std::endl;
 
-	server myServer;
+	Socket myServer;
 	if (myServer.initsocket() < 0)
 	{
 		std::cerr << "Failed to set up the server." << std::endl;
