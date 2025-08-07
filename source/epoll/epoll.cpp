@@ -6,7 +6,7 @@
 /*   By: nacao <nacao@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/06 14:53:35 by naiqing           #+#    #+#             */
-/*   Updated: 2025/08/07 17:10:47 by nacao            ###   ########.fr       */
+/*   Updated: 2025/08/07 17:16:49 by nacao            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,8 +19,26 @@ void initEpollEvent(struct epoll_event *event, uint32_t events, int fd)
     event->data.fd = fd; // Associate the file descriptor with the event
 }
 
-void initConnection(Socket &socket, int i)
+int initConnection(Socket &socket, int i)
 {   
+    struct epoll_event  event;
+    struct sockaddr_in  addr; // Structure to hold the address of the incoming connection
+    socklen_t           in_len = sizeof(addr); // Length of the address structure
+    int                 newFd;
+
+    if ((newFd = accept(socket.getSocket(i), (struct sockaddr *)&addr, &in_len)) < 0) // Accept the new connection
+    {
+        if (errno == EAGAIN || errno == EWOULDBLOCK)
+        {
+            // No more connections to accept
+            return OK;
+        }
+        else
+        {
+            perror("accept");
+            return ERROR;
+        }
+    }
 }
 
 int createSocketEpoll(Socket &socket)

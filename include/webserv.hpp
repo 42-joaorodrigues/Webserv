@@ -12,6 +12,7 @@
 #include <sys/epoll.h> 
 #include <stdio.h>
 #include <vector> // For std::vector
+#include <cerrno> // For errno
 
 #include "../source/epoll/epoll.hpp"// For epoll functions
 #include "../source/server/server.hpp" // For server class
