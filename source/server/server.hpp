@@ -1,25 +1,24 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
-#include "../../webserv.hpp"
+#include "../../include/webserv.hpp"
 
-
-class server
+class Server
 {
-	private:
-		int _socketfd;
-		struct sockaddr_in _addr;// Server address structure to save IP address and port, used with bind()
-		
-
-	public:
-		server(/* args */);
-		~server();
-		server(const server &other);
-		server &operator=(const server &other);
-
-		int setup();
-		
+private:
+	/* data */
+public:
+	Server(/* args */);
+	~Server();
 };
+
+Server::Server(/* args */)
+{
+}
+
+Server::~Server()
+{
+}
 
 
 
