@@ -5,11 +5,11 @@
 
 class Server
 {
-private:
-	/* data */
-public:
-	Server(/* args */);
-	~Server();
+	private:
+		/* data */
+	public:
+		Server(/* args */);
+		~Server();
 };
 
 Server::Server(/* args */)

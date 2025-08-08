@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   socket.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nacao <nacao@student.42.fr>                +#+  +:+       +#+        */
+/*   By: naiqing <naiqing@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/07 11:08:21 by nacao             #+#    #+#             */
-/*   Updated: 2025/08/07 16:25:38 by nacao            ###   ########.fr       */
+/*   Updated: 2025/08/08 13:27:53 by naiqing          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,8 +20,11 @@ class Socket
 	private:
 		int 			_socketfd;
 		int 			_epollfd;
-		vector_servers	_config;
+		
+		vector_servers	_server;
 		vector_int		_socket;
+		mapSocket		_connected;
+
 		struct sockaddr_in _addr;// socket address structure to save IP address and port, used with bind()
 		
 
@@ -30,20 +33,21 @@ class Socket
 		~Socket();
 		Socket(const Socket &other);
 		Socket &operator=(const Socket &other);
+	
+		// Methods
+		int		initsocket();
+		int		socketMatch(int fd) const;
 
-		int initsocket();
-		
+		//getters and setters
 		void	setEpollfd(int epollfd);
 		int		getEpollfd() const;
 		size_t  getNumberOfListeningSockets() const;
 		int		getListeningSocket(int index) const;
 		int		getSocketnumber() const;
 		int		getSocket(int n) const;
-
-		
-		int		socketMatch(int fd) const;
-
-		int socketMatch(int fd) const; // Check if the file descriptor matches any of the listening sockets
+		int		getConnection(int connectionSocket);
+		void	addConnection(int fd, int serverId);
+		void	setSocket(int newSocket);
 
 };
 

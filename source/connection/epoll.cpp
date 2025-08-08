@@ -3,20 +3,38 @@
 /*                                                        :::      ::::::::   */
 /*   epoll.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nacao <nacao@student.42.fr>                +#+  +:+       +#+        */
+/*   By: naiqing <naiqing@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/06 14:53:35 by naiqing           #+#    #+#             */
-/*   Updated: 2025/08/07 17:16:49 by nacao            ###   ########.fr       */
+/*   Updated: 2025/08/08 11:11:22 by naiqing          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "epoll.hpp"
+#include "../../include/webserv.hpp"
+#include "socket.hpp"
 
 void initEpollEvent(struct epoll_event *event, uint32_t events, int fd)
 {
     memset(event, 0, sizeof(*event)); // Clear the event structure
     event->events = events; // Set the event type (e.g., EPOLLIN, EPOLLOUT)
     event->data.fd = fd; // Associate the file descriptor with the event
+}
+
+// Set the fd to non-blocking mode
+int setNonBlocking(int fd)
+{
+	int flags = fcntl(fd, F_GETFL, 0); // Get the current file descriptor flags
+	if (flags < 0)
+	{
+		perror("fcntl F_GETFL");
+		return ERROR; // Return error if fcntl fails
+	}
+	if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0) // Set the file descriptor to non-blocking mode
+	{
+		perror("fcntl F_SETFL O_NONBLOCK");
+		return ERROR;
+	}
+	return OK;
 }
 
 int initConnection(Socket &socket, int i)
@@ -28,6 +46,7 @@ int initConnection(Socket &socket, int i)
 
     if ((newFd = accept(socket.getSocket(i), (struct sockaddr *)&addr, &in_len)) < 0) // Accept the new connection
     {
+		//EAGAIN and EWOULDBLOCK are not errors, they just mean no more connections to accept
         if (errno == EAGAIN || errno == EWOULDBLOCK)
         {
             // No more connections to accept
@@ -39,6 +58,23 @@ int initConnection(Socket &socket, int i)
             return ERROR;
         }
     }
+
+	// Set the new socket to non-blocking mode
+	if (setNonBlocking(newFd) < 0)
+		return ERROR;
+
+	// Initialize the epoll event for the new connection
+	// This will allow the epoll instance to monitor the new connection for incoming data
+	initEpollEvent(&event, EPOLLIN, newFd);
+	socket.addConnection(newFd, i); // Add the new connection to the socket's connection map
+
+	if (epoll_ctl(socket.getEpollfd(), EPOLL_CTL_ADD, newFd, &event) < 0) // Add the new connection to the epoll instance
+	{
+		perror("epoll_ctl: new connection");
+		close(newFd);
+		return ERROR;
+	}
+	return OK;
 }
 
 int createSocketEpoll(Socket &socket)
@@ -101,21 +137,32 @@ int waitEpoll(Socket &socket)
         {
             // Handle error or hang-up events
             std::cerr << "Epoll error or hang-up on fd: " << events[j].data.fd << std::endl;
-            close(events[j].data.fd); // Close the file descriptor
+            close(events[j].data.fd);
             return OK;
         }
         // Check if current fd is the socket fd -> means new connection coming
         else if ((i = socket.socketMatch(events[j].data.fd)) >= 0)
         {
-            initConnection(socket, i);
-            
+            if (initConnection(socket, i))
+				return ERROR; // Initialize the new connection
         }
+		// Check if the event is for stdin (file descriptor 0)
+		else if (events[j].data.fd == 0)
+		{
+			//clean all the content of the stdin, until the \n
+			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+			return ERROR;
+		}
+		else
+		//if this fd is not a listening socket, or stdin, it must be a connection that is ready to connected
+		{
+			TODO: // Handle the connection ready to be read with http
+		}
+		
     }
-    
-
 }
 
-int Epoll::initEpoll(Socket &socket)
+int initEpoll(Socket &socket)
 {
     //initialize the epoll, subscribe the socket to the epoll instance
     if (createSocketEpoll(socket) < 0)
@@ -128,24 +175,18 @@ int Epoll::initEpoll(Socket &socket)
     //main loop, wait and handle epoll events
     //if no ERROR, loop continues
     while (waitEpoll(socket) != ERROR)
-    {
-    };
+		;
 
     std::cout << "Webserve stopped." << std::endl;
 
     //clean sources
-
-    //clean epollfd
+	for (int i = 0; i < socket.getSocketnumber(); ++i)
+	{
+		close(socket.getSocket(i)); // Close each socket
+		epoll_ctl(socket.getEpollfd(), EPOLL_CTL_DEL, socket.getSocket(i), NULL); // Remove the socket from the epoll instance
+	}
+	
+	close(socket.getEpollfd()); // Close the epoll file descriptor
 
     return OK;
-}
-
-
-
-Epoll::Epoll(/* args */)
-{
-}
-
-Epoll::~Epoll()
-{
 }

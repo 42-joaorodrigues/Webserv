@@ -3,47 +3,18 @@
 /*                                                        :::      ::::::::   */
 /*   socket.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nacao <nacao@student.42.fr>                +#+  +:+       +#+        */
+/*   By: naiqing <naiqing@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/07 11:08:49 by nacao             #+#    #+#             */
-/*   Updated: 2025/08/07 16:09:06 by nacao            ###   ########.fr       */
+/*   Updated: 2025/08/08 13:36:02 by naiqing          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-
 #include "socket.hpp"
-#include <cerrno>
 
-void	Socket::setEpollfd(int epollfd)
-{
-	this->_epollfd = epollfd;
-}
-
-int Socket::getEpollfd() const 
-{
-	return this->_epollfd;
-}
-
-size_t  Socket::getNumberOfListeningSockets() const
-{
-	return _config.size();
-}
-
-// Returns the number of the listening socket at the index
-int		Socket::getListeningSocket(int index) const
-{
-	return _socket[index];
-}
-
-int		Socket::getSocketnumber() const
-{
-	return _socket.size();
-}
-
-int	Socket::getSocket(int n) const
-{
-	return this->_socket[n];
-}
+/* 
+ * methods
+*/
 
 int		Socket::socketMatch(int fd) const
 {
@@ -52,19 +23,46 @@ int		Socket::socketMatch(int fd) const
 		if (fd == this->getSocket(i))
 			return i;
 	}
-	return ERROR; // Not found
+	return ERROR;
 }
 		
 
 //Transmission Control Protocol
 
+
+
 int Socket::initsocket()
 {
-	this->_socketfd = ::socket(AF_INET, SOCK_STREAM, 0);
-	if (this->_socketfd < 0) {
-		std::cerr << "Error creating socket: " << strerror(errno) << std::endl;
-		return -1;
+	int num = 1;
+
+	for (size_t i = 0; i < _server.size(); ++i)
+	{
+		this->_socketfd = socket(AF_INET, SOCK_STREAM, 0);
+		if (this->_socketfd < 0)
+		{
+			perror("socket");
+			return ERROR;
+		}
+
+		this->setSocket(this->_socketfd); // Set the socket file descriptor in the vector of sockets
+
+		//set the socket  to SO_REUSEADDR option
+		// This allows the socket to be bound to an address that is already in use
+		if (setsockopt(getSocket(i), SOL_SOCKET, SO_REUSEADDR, &num, sizeof(num)))
+		{
+			perror("setsockopt");
+			close(this->_socketfd);
+			return ERROR;
+		}
+
+		
+
+		
 	}
+
+
+	
+
 
 	//Listens on 0.0.0.0:8080 for IPv4 requests on all devices
 	this->_addr.sin_family = AF_INET;// AF_INET->Address Family Internet & Set address family to IPv4
@@ -125,6 +123,61 @@ int Socket::initsocket()
 
 	return 0; // 
 }
+
+/*
+ * getter & setter
+*/
+
+void Socket::setSocket(int newSocket)
+{
+	this->_socket.push_back(newSocket);
+}
+
+void	Socket::setEpollfd(int epollfd)
+{
+	this->_epollfd = epollfd;
+}
+
+int Socket::getEpollfd() const 
+{
+	return this->_epollfd;
+}
+
+size_t  Socket::getNumberOfListeningSockets() const
+{
+	return _server.size();
+}
+
+// Returns the number of the listening socket at the index
+int		Socket::getListeningSocket(int index) const
+{
+	return _socket[index];
+}
+
+int		Socket::getSocketnumber() const
+{
+	return _socket.size();
+}
+
+int	Socket::getSocket(int n) const
+{
+	return this->_socket[n];
+}
+
+int Socket::getConnection(int connectionSocket)
+{
+	return _connected[connectionSocket];
+}
+
+void Socket::addConnection(int fd, int serverId)
+{
+	_connected[fd] = serverId;
+}
+
+
+/*
+ * Constructor & Destructor
+*/
 
 Socket::Socket()
 {

@@ -13,11 +13,16 @@
 #include <stdio.h>
 #include <vector> // For std::vector
 #include <cerrno> // For errno
+#include <map> // For std::map
+#include <limits>
 
-#include "../source/epoll/epoll.hpp"// For epoll functions
+
 #include "../source/server/server.hpp" // For server class
-#include "../source/socket/socket.hpp" // For socket class
+#include "../source/connection/socket.hpp" // For socket class
 #include "../source/config/config.hpp" // For config class
+
+class Socket;
+class Server;
 
 #define OK 0
 #define ERROR -1
@@ -25,5 +30,9 @@
 
 typedef std::vector<int> vector_int; // Vector of integers, used for file descriptors
 typedef std::vector<Server> vector_servers; // Vector of Server objects, used for managing multiple servers
+typedef std::map<int, int> mapSocket; // Map to associate file descriptors with their corresponding server or socket
+
+int		setNonBlocking(int fd);
+int		initEpoll(Socket &socket);
 
 #endif

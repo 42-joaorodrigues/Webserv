@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   config.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nacao <nacao@student.42.fr>                +#+  +:+       +#+        */
+/*   By: naiqing <naiqing@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/07 14:06:04 by nacao             #+#    #+#             */
-/*   Updated: 2025/08/07 16:25:00 by nacao            ###   ########.fr       */
+/*   Updated: 2025/08/07 19:55:15 by naiqing          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,8 +14,6 @@
 #define CONFIG_HPP
 
 #include "../../include/webserv.hpp"
-
-
 
 class Config
 {
