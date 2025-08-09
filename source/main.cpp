@@ -18,17 +18,10 @@ int main(int argc, char *argv[]) {
 	(void)argv;
 	std::cout << "Webserv is starting..." << std::endl;
 
-	Socket myServer;
-	if (myServer.initsocket() < 0)
-	{
-		std::cerr << "Failed to set up the server." << std::endl;
-		return EXIT_FAILURE;
-	}
-	else
-	{
-		std::cout << "Server is set up and listening." << std::endl;
-	}
-	
+	Config config;
+	Socket socket(config);
 
-	return EXIT_SUCCESS;
+	initEpoll(socket);
+
+	return OK;
 }

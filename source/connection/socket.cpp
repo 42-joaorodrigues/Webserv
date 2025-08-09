@@ -6,7 +6,7 @@
 /*   By: naiqing <naiqing@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/07 11:08:49 by nacao             #+#    #+#             */
-/*   Updated: 2025/08/08 13:36:02 by naiqing          ###   ########.fr       */
+/*   Updated: 2025/08/09 11:18:44 by naiqing          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,6 +25,17 @@ int		Socket::socketMatch(int fd) const
 	}
 	return ERROR;
 }
+
+void Socket::setAddress(int port, const char *ip)
+{
+	this->_addr.sin_family = AF_INET;// AF_INET->Address Family Internet & Set address family to IPv4
+	this->_addr.sin_addr.s_addr = inet_addr(ip); // Bind to all available interfaces
+	this->_addr.sin_port = htons(port); // Set port number (e.g., 8080) and convert to network byte order big-endian
+	memset(this->_addr.sin_zero, '\0', sizeof(this->_addr.sin_zero)); // Clear the rest of the structure
+	
+	this->_vectorAddr.push_back(this->_addr); // Add the address to the vector of addresses
+	this->_vectorAddrLen.push_back(sizeof(this->_addr)); // Add the length of the address to the vector of lengths
+}
 		
 
 //Transmission Control Protocol
@@ -35,7 +46,7 @@ int Socket::initsocket()
 {
 	int num = 1;
 
-	for (size_t i = 0; i < _server.size(); ++i)
+	for (size_t i = 0; i < this->_server.size(); ++i)
 	{
 		this->_socketfd = socket(AF_INET, SOCK_STREAM, 0);
 		if (this->_socketfd < 0)
@@ -54,74 +65,29 @@ int Socket::initsocket()
 			close(this->_socketfd);
 			return ERROR;
 		}
-
 		
-
+		// Set the address and port for the socket
+		this->setAddress(this->_server[i].getPort(), this->_server[i].getIp().c_str()); // Set the address and port for the socket
 		
+		// Bind the socket to the address and port
+		//(struct sockaddr*)&sockaddr: pass the address information to the kernel
+		if(bind(getSocket(i), (struct sockaddr *)&getAddress(i), (int)getAddressLength(i)) < 0)
+		{
+			perror("bind");
+			return ERROR;
+		}
+		if (setNonBlocking(this->_socketfd) < 0) // Set the socket to non-blocking mode
+		{
+			perror("setNonBlocking");
+			return ERROR;
+		}
+		if (listen(this->getSocket(i), MAX_EVENTS) < 0) // Listen for incoming connections on the socket
+		{
+			perror("listen");
+			return ERROR;
+		}	
 	}
-
-
-	
-
-
-	//Listens on 0.0.0.0:8080 for IPv4 requests on all devices
-	this->_addr.sin_family = AF_INET;// AF_INET->Address Family Internet & Set address family to IPv4
-	this->_addr.sin_addr.s_addr = INADDR_ANY; // Bind to all available interfaces
-	this->_addr.sin_port = htons(8080); // Set port number (e.g., 8080) and convert to network byte order big-endian
-	
-	// Bind the socket to the address and port
-	//(struct sockaddr*)&sockaddr: pass the address information to the kernel
-	if(bind(this->_socketfd, (struct sockaddr *)&this->_addr, sizeof(this->_addr)) < 0)
-	{
-		std::cerr << "Error binding socket: " << strerror(errno) << std::endl;
-		close(this->_socketfd);
-		return -1;
-	}
-
-	// Listen for incoming connections, with a backlog of 100
-	// The backlog is the maximum length of the queue of pending connections
-	if(listen(this->_socketfd, 100) < 0) 
-	{
-		std::cerr << "Error listening on socket: " << strerror(errno) << std::endl;
-		close(this->_socketfd);
-		return -1;
-	}
-
-	//acept() is used to accept a connection on a socket
-	// It blocks until a connection is made, then returns a new socket file descriptor for the connection
-	socklen_t addrlen = sizeof(this->_addr);
-	int connection = accept(this->_socketfd, (struct sockaddr *)&this->_addr, &addrlen);
-	
-	// Check if accept() was successful
-	// If it returns -1, an error occurred
-	if (connection < 0)
-	{
-		std::cerr << "Error accepting connection: " << strerror(errno) << std::endl;
-		close(this->_socketfd);
-		return -1;
-	}
-
-	//receive data from the client
-	char buffer[100];
-	ssize_t bytesRead = read(connection, buffer, 100);
-	(void)bytesRead; // Ignore the return value for now
-	//print the received message from the client
-	std::cout << "The message was: " << buffer << std::endl;
-
-	//send a response back to the client
-	std::string response = 
-		"HTTP/1.1 200 OK\r\n"
-		"Content-Length: 19\r\n"
-		"Content-Type: text/plain\r\n"
-		"\r\n"
-		"Hello from socket!\n";
-	send(connection, response.c_str(), response.size(), 0);
-
-	close(connection); // Close the connection socket
-	close(this->_socketfd); // Close the socket socket
-
-
-	return 0; // 
+	return OK;
 }
 
 /*
@@ -154,7 +120,7 @@ int		Socket::getListeningSocket(int index) const
 	return _socket[index];
 }
 
-int		Socket::getSocketnumber() const
+size_t		Socket::getSocketnumber() const
 {
 	return _socket.size();
 }
@@ -174,13 +140,30 @@ void Socket::addConnection(int fd, int serverId)
 	_connected[fd] = serverId;
 }
 
+const sockaddr_in	 &Socket::getAddress(size_t index) const
+{
+	return _vectorAddr[index];
+}
+
+socklen_t Socket::getAddressLength(size_t index) const
+{
+	return _vectorAddrLen[index];
+}
+
 
 /*
  * Constructor & Destructor
 */
 
-Socket::Socket()
+Socket::Socket(Config &config)
 {
+	this->_server = config.getServers(); // Get the servers from the config
+	(void)config;
+	if (this->initsocket() < 0)
+	{
+		perror("initsocket");
+		exit(EXIT_FAILURE);
+	}
 }
 
 Socket::~Socket()

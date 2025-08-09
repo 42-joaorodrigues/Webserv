@@ -1,3 +1,5 @@
+ss -ltnp | grep 8080
+
 Create your own HTTP server
 
 - Accept HTTP requests (GET, POST, DELETE)

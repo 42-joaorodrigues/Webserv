@@ -6,19 +6,17 @@
 class Server
 {
 	private:
-		/* data */
+		std::string _ip; // IP address for the server
+		int _port; // Port number for the server
+
 	public:
-		Server(/* args */);
+		Server(std::string ip, int port);
 		~Server();
+
+		int	getPort() const;
+		std::string getIp() const;
 };
 
-Server::Server(/* args */)
-{
-}
-
-Server::~Server()
-{
-}
 
 
 

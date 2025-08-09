@@ -1,28 +1,34 @@
-NAME = webserv
+NAME    := webserv
 
-CPP = c++
-CPPFLAG = -Wall -Wextra -Werror -std=c++98 -Isource/server
+CPP     := c++
+CPPFLAG := -Wall -Wextra -Werror -std=c++98 -MMD -MP
 
-SRCDIR = source/server
-SRC = main.cpp
-SRC += $(SRCDIR)/server.cpp
+INCLUDES := $(shell find include source -type d)
+CPPFLAG  += $(addprefix -I, $(INCLUDES))
 
-OBJ = $(SRC:.cpp=.o)
+SRCDIRS := source/server source/config source/connection
+SRCS    := $(wildcard $(SRCDIRS:%=%/*.cpp)) source/main.cpp
+OBJDIR  := build
+OBJS    := $(SRCS:%.cpp=$(OBJDIR)/%.o)
+DEPS    := $(OBJS:.o=.d)
 
 all: $(NAME)
 
-$(NAME): $(OBJ)
-	$(CPP) $(CPPFLAG) $(OBJ) -o $(NAME)
+$(NAME): $(OBJS)
+	$(CPP) $(CPPFLAG) $(OBJS) -o $@
 
-%.o: %.cpp
+$(OBJDIR)/%.o: %.cpp
+	@mkdir -p $(dir $@)
 	$(CPP) $(CPPFLAG) -c $< -o $@
 
 clean:
-	rm -f $(OBJ)
+	rm -rf $(OBJDIR)
 
 fclean: clean
 	rm -f $(NAME)
 
 re: fclean all
+
+-include $(DEPS)
 
 .PHONY: all clean fclean re
