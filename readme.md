@@ -1,5 +1,50 @@
 ss -ltnp | grep 8080
 
+┌────────────────────────────────┐
+│            main()              │
+└──────────────┬─────────────────┘
+               │
+               ▼
+┌────────────────────────────────┐
+│ Config                         │
+│ - Load / hardcode configuration│
+│ - Return vector<Server>        │
+│   e.g., [("127.0.0.1", 8080)]  │
+└──────────────┬─────────────────┘
+               │
+               ▼
+┌────────────────────────────────┐
+│ Server                         │
+│ - Store one listening IP/Port  │
+│ - getIp(), getPort()           │
+└──────────────┬─────────────────┘
+               │ (Config gives Server list)
+               ▼
+┌────────────────────────────────┐
+│ Socket                         │
+│ - Loop over Server list:       │
+│   socket() → bind(IP, Port)    │
+│   → listen()                   │
+│ - Register listening fds in    │
+│   epoll                        │
+│ - socketMatch(): check if fd   │
+│   is a listening socket        │
+└──────────────┬─────────────────┘
+               │
+               ▼
+┌────────────────────────────────┐
+│ epoll Event Loop               │
+│ - Wait for events (epoll_wait) │
+│ - If listening fd + EPOLLIN:   │
+│     accept() new connection    │
+│     register client fd in epoll│
+│ - If client fd + EPOLLIN:      │
+│     recv() HTTP request        │
+│     send() HTTP response       │
+│     close() connection         │
+└────────────────────────────────┘
+
+
 Create your own HTTP server
 
 - Accept HTTP requests (GET, POST, DELETE)
