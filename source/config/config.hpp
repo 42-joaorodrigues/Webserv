@@ -15,21 +15,12 @@
 
 #include "../../include/webserv.hpp"
 
-class Config
-{
-	private:
-		
-	
-	public:
-	
-		vector_servers getServers() const
-		{
-			vector_servers servers;
-			servers.push_back(Server("127.0.0.1", 8080));
-			return servers;
-		}
-		
-    
+class Config {
+	vector_servers _servers;
+public:
+	Config(const std::string& filename);
+
+	vector_servers getServers() { return _servers; }
 };
 
 #endif

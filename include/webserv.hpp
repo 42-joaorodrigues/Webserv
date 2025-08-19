@@ -16,7 +16,8 @@
 #include <map> // For std::map
 #include <limits>
 #include <arpa/inet.h> // For inet_addr
-
+#include <fstream> // std::ifstream
+#include <sstream> // std::istringstream
 
 #include "../source/server/server.hpp" // For server class
 #include "../source/connection/socket.hpp" // For socket class
