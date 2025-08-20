@@ -13,15 +13,27 @@
 #include "../include/webserv.hpp"
 
 int main(int argc, char *argv[]) {
-	
-	(void)argc;
-	(void)argv;
 	std::cout << "Webserv is starting..." << std::endl;
 
-	Config config;
-	Socket socket(config);
+	try {
+		std::string config_file;
+		if (argc < 2) {
+			config_file = "config/default.conf";
+		} else if (argc == 2) {
+			config_file = argv[1];
+		} else {
+			std::cerr << "Usage: ./" << argv[0] << " <config_file>(optional)" << std::endl;
+			return 2;
+		}
 
-	initEpoll(socket);
+		Config config(config_file);
+		Socket socket(config);
 
-	return OK;
+		initEpoll(socket);
+
+		return OK;
+	} catch (const std::exception& e) {
+		std::cout << "Error: " << e.what() << std::endl;
+		return 1;
+	}
 }

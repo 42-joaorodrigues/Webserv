@@ -18,12 +18,19 @@ class Tokenizer {
     int _line;
     int _col;
 
-    void advancePosition(char c);
-    void tryAddToken(std::string& current, int start_col);
 public:
     Tokenizer(std::istream& input);
 
+    // getters
     const std::vector<Token>& getTokens() const { return _tokens; }
+
+    // debug
+    void printTokens() const;
+
+private:
+    // helper functions
+    void advancePosition(char c);
+    void tryAddToken(std::string& current, int start_col);
 };
 
 #endif // TOKENIZER_HPP

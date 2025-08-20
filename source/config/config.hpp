@@ -13,14 +13,31 @@
 #ifndef CONFIG_HPP
 #define CONFIG_HPP
 
+#include "Tokenizer.hpp"
 #include "../../include/webserv.hpp"
 
 class Config {
-	vector_servers _servers;
+	std::vector<Server> _servers;
+
 public:
 	Config(const std::string& filename);
 
-	vector_servers getServers() { return _servers; }
+	// getters
+	std::vector<Server> getServers() { return _servers; }
+
+private:
+	// helpers
+	std::vector<Token> _tokens;
+	size_t _pos;
+
+	void parseServer();
+	void parseListen(Server& server);
+	void parseLocation(Server& server);
+
+	bool match(const std::string& value);
+	const Token& peek() const;
+	void expect(const std::string& value);
+	void advance();
 };
 
 #endif

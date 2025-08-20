@@ -11,24 +11,3 @@
 /* ************************************************************************** */
 
 #include "../../include/webserv.hpp"
-
-int Server::getPort() const
-{
-	return _port;
-}
-
-std::string Server::getIp() const
-{
-	return _ip;
-}
-
-Server::Server(std::string ip, int port) : _ip(ip), _port(port)
-{
-	(void)ip; // Suppress unused parameter warning
-	(void)port; // Suppress unused parameter warning
-}
-
-Server::~Server()
-{
-}
-
