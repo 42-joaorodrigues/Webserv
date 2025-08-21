@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
 	try {
 		std::string config_file;
 		if (argc < 2) {
-			config_file = "config/default.conf";
+			config_file = "config/NGINX.conf";
 		} else if (argc == 2) {
 			config_file = argv[1];
 		} else {
@@ -27,6 +27,8 @@ int main(int argc, char *argv[]) {
 		}
 
 		Config config(config_file);
+		config.printConfig();
+
 		Socket socket(config);
 
 		initEpoll(socket);
