@@ -69,7 +69,7 @@ void Config::parseLocAutoIndex(Location& location) {
 }
 
 void Config::parseLocUpload(Location& location) {
-	location.index = peek()._value;
+	location.upload_store = peek()._value;
 	advance();
 	expect(";");
 }
