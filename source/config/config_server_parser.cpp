@@ -6,7 +6,8 @@ void Config::parseServer(Server& server) {
 	advance();
 
 	while (!match("}")) {
-		std::string key = peek()._value;
+		Token key_tkn = peek();
+		std::string key = key_tkn._value;
 		advance();
 
 		if (key == "listen") parseListen(server);
@@ -18,7 +19,7 @@ void Config::parseServer(Server& server) {
 		else if (key == "location") parseLocation(server);
 		else {
 			std::ostringstream oss;
-			oss << "Unknown directive '" << key << "' at line " << peek()._line;
+			oss << "Unknown directive '" << key << "' at line " << key_tkn._line;
 			throw std::runtime_error(oss.str());
 		}
 
@@ -130,20 +131,4 @@ void Config::parseBodySize(Server& server) {
 	server.setClientMaxBodySize(static_cast<size_t>(value) * multiplier);
 	advance();
 	expect(";");
-}
-
-void Config::parseLocation(Server& server) {
-	(void)server; // temp
-	Location location;
-
-	location.path = peek()._value;
-	advance();
-	expect("{");
-
-	// temporary
-	while (!match("}")) {
-		std::string key = peek()._value;
-		advance();
-
-	}
 }

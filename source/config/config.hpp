@@ -16,6 +16,8 @@
 #include "tokenizer.hpp"
 #include "../../include/webserv.hpp"
 
+struct Location;
+
 class Config {
 	std::vector<Server> _servers;
 
@@ -44,8 +46,20 @@ private:
 	void parseIndex(Server& server);
 	void parseErrorPage(Server& server);
 	void parseBodySize(Server& server);
+	// ---
 
+	// location parsers
 	void parseLocation(Server& server);
+
+	void parseLocMethods(Location& location);
+	void parseLocRoot(Location& location);
+	void parseLocIndex(Location& location);
+	void parseLocAutoIndex(Location& location);
+	void parseLocUpload(Location& location);
+	void parseLocRedirect(Location& location);
+	void parseLocCgiExt(Location& location);
+	void parseLocCgiPath(Location& location);
+	// ---
 };
 
 #endif

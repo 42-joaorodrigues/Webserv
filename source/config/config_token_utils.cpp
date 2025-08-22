@@ -16,8 +16,12 @@ const Token& Config::peek() const {
 
 void Config::expect(const std::string& value) {
 	if (!match(value)) {
+		size_t old_pos = _pos > 0 ? _pos - 1 : _pos;
+		Token old_token = _tokens[old_pos];
+
 		std::ostringstream oss;
-		oss << "Expected '" << value << "' at line " << peek()._line << " col " << peek()._col;
+		oss << "Expected '" << value << "' at line " << old_token._line
+			<< " col " << old_token._col + old_token._value.length();
 		throw std::runtime_error(oss.str());
 	}
 }

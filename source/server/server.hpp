@@ -3,6 +3,14 @@
 
 #include "../../include/webserv.hpp"
 
+struct Redirect {
+    bool exists;
+    int code;
+    std::string target;
+
+    Redirect() : exists(false), code(-1) {}
+};
+
 // Represents a "location" block inside a server
 struct Location {
     std::string path;                          // The location path (/upload, /cgi-bin, /)
@@ -11,7 +19,7 @@ struct Location {
     std::string index;                         // Default file (e.g., index.html)
     bool autoindex;                            // Directory listing enabled/disabled
     std::string upload_store;                  // Upload directory (if enabled)
-    std::string redirect;                      // Redirect target (e.g., "http://...")
+    Redirect redirect;                      // Redirect target (e.g., "http://...")
     std::string cgi_extension;                 // File extension that triggers CGI (e.g., ".php")
     std::string cgi_path;                      // Path to CGI executable (e.g., "/usr/bin/php-cgi")
 

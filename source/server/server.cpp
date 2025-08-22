@@ -76,9 +76,16 @@ void Server::printServer() const {
 			std::cout << "  Root: " << loc.root << std::endl
 					  << "  Index: " << loc.index << std::endl
 					  << "  Auto Index: " << (loc.autoindex ? "on" : "off") << std::endl
-					  << "  Upload Store: " << loc.upload_store << std::endl
-					  << "  Redirect: " << loc.redirect << std::endl
-					  << "  CGI Extension: " << loc.cgi_extension << std::endl
+					  << "  Upload Store: " << loc.upload_store << std::endl;
+
+			std::cout << "  Redirect: ";
+			if (!loc.redirect.exists) {
+				std::cout << "(none)" << std::endl;
+			} else {
+				std::cout << loc.redirect.code << " " << loc.redirect.target << std::endl;
+			}
+
+			std::cout << "  CGI Extension: " << loc.cgi_extension << std::endl
 					  << "  CGI Path: " << loc.cgi_path << std::endl;
 		}
 	}
