@@ -1,32 +1,33 @@
-#include "ServerParser.hpp"
+#include "config.hpp"
 
-ServerParser::ServerParser(const std::vector<Token>& tokens, size_t& pos)
-	: _tokens(tokens), _pos(pos) {
-
+void Config::parseServer(Server& server) {
 	advance();
 	expect("{");
+	advance();
 
 	while (!match("}")) {
 		std::string key = peek()._value;
 		advance();
 
-		if (key == "listen") parseListen();
-		else if (key == "server_name") parseServerName();
-		else if (key == "root") parseRoot();
-		else if (key == "index") parseIndex();
-		else if (key == "error_page") parseErrorPage();
-		else if (key == "client_max_body_size") parseBodySize();
-		else if (key == "location") parseLocation();
-
+		if (key == "listen") parseListen(server);
+		else if (key == "server_name") parseServerName(server);
+		else if (key == "root") parseRoot(server);
+		else if (key == "index") parseIndex(server);
+		else if (key == "error_page") parseErrorPage(server);
+		else if (key == "client_max_body_size") parseBodySize(server);
+		else if (key == "location") parseLocation(server);
 		else {
 			std::ostringstream oss;
 			oss << "Unknown directive '" << key << "' at line " << peek()._line;
 			throw std::runtime_error(oss.str());
 		}
+
+		advance();
 	}
+	advance();
 }
 
-void ServerParser::parseListen() {
+void Config::parseListen(Server& server) {
 	std::string input = peek()._value;
 
 	// look for ':' separator
@@ -36,7 +37,7 @@ void ServerParser::parseListen() {
 	}
 
 	// set ip
-	_server.setIp(input.substr(0, pos));
+	server.setIp(input.substr(0, pos));
 
 	// set port
 	std::string port_str = input.substr(pos + 1);
@@ -44,33 +45,33 @@ void ServerParser::parseListen() {
 	if (port <= 0 || port > 65535) {
 		throw std::runtime_error("Invalid port number: " + port_str);
 	}
-	_server.setPort(port);
+	server.setPort(port);
 
 	advance();
 	expect(";");
 }
 
-void ServerParser::parseServerName() {
+void Config::parseServerName(Server& server) {
 	while (!match(";")) {
-		_server.addServerName(peek()._value);
+		server.addServerName(peek()._value);
 		advance();
 	}
 }
 
-void ServerParser::parseRoot() {
-	_server.setRoot(peek()._value);
+void Config::parseRoot(Server& server) {
+	server.setRoot(peek()._value);
 	advance();
 	expect(";");
 }
 
-void ServerParser::parseIndex() {
+void Config::parseIndex(Server& server) {
 	while (!match(";")) {
-		_server.addIndex(peek()._value);
+		server.addIndex(peek()._value);
 		advance();
 	}
 }
 
-void ServerParser::parseErrorPage() {
+void Config::parseErrorPage(Server& server) {
 	std::vector<int> codes;
 
 	// collect codes until we hit something that looks like a path (starts with "/" or a non-digit)
@@ -90,11 +91,11 @@ void ServerParser::parseErrorPage() {
 
 	// assign path to all codes
 	for (size_t i = 0; i < codes.size(); i++) {
-		_server.addErrorPage(codes[i], path);
+		server.addErrorPage(codes[i], path);
 	}
 }
 
-void ServerParser::parseBodySize() {
+void Config::parseBodySize(Server& server) {
 	const std::string str = peek()._value;
 	if (str.empty())
 		throw std::invalid_argument("Empty body size");
@@ -126,12 +127,13 @@ void ServerParser::parseBodySize() {
 		}
 	}
 
-	_server.setClientMaxBodySize(static_cast<size_t>(value) * multiplier);
+	server.setClientMaxBodySize(static_cast<size_t>(value) * multiplier);
 	advance();
 	expect(";");
 }
 
-void ServerParser::parseLocation() {
+void Config::parseLocation(Server& server) {
+	(void)server; // temp
 	Location location;
 
 	location.path = peek()._value;
@@ -145,31 +147,3 @@ void ServerParser::parseLocation() {
 
 	}
 }
-
-bool ServerParser::match(const std::string& value) {
-	if (_pos < _tokens.size() && _tokens[_pos]._value == value) {
-		advance();
-		return true;
-	}
-	return false;
-}
-
-const Token& ServerParser::peek() const {
-	if (_pos >= _tokens.size()) {
-		throw std::runtime_error("Unexpected end of tokens");
-	}
-	return _tokens[_pos];
-}
-
-void ServerParser::expect(const std::string& value) {
-	if (!match(value)) {
-		std::ostringstream oss;
-		oss << "Expected '" << value << "' at line " << peek()._line << " col " << peek()._col;
-		throw std::runtime_error(oss.str());
-	}
-}
-
-void ServerParser::advance() {
-	_pos++;
-}
-

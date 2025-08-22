@@ -11,7 +11,7 @@ add_executable(Webserv source/main.cpp
 		source/connection/socket.hpp
 		source/server/server.cpp
 		source/server/server.hpp
-		source/config/Tokenizer.cpp
-		source/config/Tokenizer.hpp
-		source/config/ServerParser.cpp
-		source/config/ServerParser.hpp)
+		source/config/tokenizer.cpp
+		source/config/tokenizer.hpp
+		source/config/config_token_utils.cpp
+		source/config/config_server_parser.cpp)
