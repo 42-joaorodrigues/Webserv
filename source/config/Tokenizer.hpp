@@ -13,13 +13,13 @@ struct Token {
         : _value(value), _line(line), _col(col) {}
 };
 
-class tokenizer {
+class Tokenizer {
     std::vector<Token> _tokens;
     int _line;
     int _col;
 
 public:
-    tokenizer(std::istream& input);
+    Tokenizer(std::istream& input);
 
     // getters
     const std::vector<Token>& getTokens() const { return _tokens; }

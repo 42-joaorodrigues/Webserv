@@ -11,11 +11,14 @@ add_executable(Webserv source/main.cpp
 		source/connection/socket.hpp
 		source/server/server.cpp
 		source/server/server.hpp
-		source/config/tokenizer.cpp
-		source/config/tokenizer.hpp
-		source/config/config_token_utils.cpp
-		source/config/config_server_parser.cpp
-		source/config/config_location_parser.cpp
-		source/cgi/cgi_handler.cpp
-		source/cgi/cgi_handler.hpp
-		source/cgi/main.cpp)
+		source/config/Tokenizer.cpp
+		source/config/Tokenizer.hpp
+		source/config/ConfigTokenUtils.cpp
+		source/config/ConfigServerParser.cpp
+		source/config/ConfigLocationParser.cpp
+		source/cgi/CGIHandler.cpp
+		source/cgi/CGIHandler.hpp
+		source/cgi/main.cpp
+		source/server/ErrorPage.hpp
+		source/server/Request.hpp
+		source/server/Response.hpp)

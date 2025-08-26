@@ -1,4 +1,4 @@
-#include "cgi_handler.hpp"
+#include "CGIHandler.hpp"
 
 #include <cstdio>
 #include <cstdlib>

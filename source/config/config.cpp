@@ -11,14 +11,14 @@
 /* ************************************************************************** */
 
 #include "config.hpp"
-#include "tokenizer.hpp"
+#include "Tokenizer.hpp"
 
 Config::Config(const std::string& filename) {
 	std::ifstream file(filename.c_str());
 	if (!file)
 		throw std::runtime_error("Couldn't open config file.");
 
-	tokenizer tokenizer(file);
+	Tokenizer tokenizer(file);
 	// tokenizer.printTokens();
 
 	_tokens = tokenizer.getTokens();

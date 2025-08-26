@@ -84,7 +84,9 @@ void Config::parseErrorPage(Server& server) {
 
 	// now the path
 	if (_pos >= _tokens.size()) {
-		throw std::runtime_error("Expected error page path after codes at line " + peek()._line);
+		std::ostringstream oss;
+		oss << "Expected error page path after codes at line " << peek()._line;
+		throw std::runtime_error(oss.str());
 	}
 	std::string path = peek()._value;
 	advance();

@@ -13,7 +13,7 @@
 #ifndef CONFIG_HPP
 #define CONFIG_HPP
 
-#include "tokenizer.hpp"
+#include "Tokenizer.hpp"
 #include "../../include/webserv.hpp"
 
 struct Location;

@@ -1,8 +1,8 @@
-#include "tokenizer.hpp"
+#include "Tokenizer.hpp"
 #include <iostream>
 #include <istream>
 
-void tokenizer::advancePosition(char c) {
+void Tokenizer::advancePosition(char c) {
 	if (c == '\n') {
 		_line++;
 		_col = 1;
@@ -11,14 +11,14 @@ void tokenizer::advancePosition(char c) {
 		_col++;
 }
 
-void tokenizer::tryAddToken(std::string& value, int start_col) {
+void Tokenizer::tryAddToken(std::string& value, int start_col) {
 	if (!value.empty()) {
 		_tokens.push_back(Token(value, _line, start_col));
 		value.clear();
 	}
 }
 
-tokenizer::tokenizer(std::istream& input) : _line(1), _col(1) {
+Tokenizer::Tokenizer(std::istream& input) : _line(1), _col(1) {
 	char c;
 	std::string current;
 	int token_start_col = 1;
@@ -60,7 +60,7 @@ tokenizer::tokenizer(std::istream& input) : _line(1), _col(1) {
 	tryAddToken(current, token_start_col);
 }
 
-void tokenizer::printTokens() const {
+void Tokenizer::printTokens() const {
 	for (std::vector<Token>::const_iterator it = _tokens.begin(); it != _tokens.end(); ++it) {
 		std::cout << "\"" << it->_value << "\" [" << it->_line << ":" << it->_col << "]" << std::endl;
 	}
