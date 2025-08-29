@@ -1,0 +1,17 @@
+#include "Request.hpp"
+
+
+bool Request::parse(const std::string &raw_request) 
+{
+    
+}
+
+bool Request::isValid() const
+{
+
+}
+
+void Request::clear()
+{
+
+}
