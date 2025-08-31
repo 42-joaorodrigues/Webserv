@@ -4,6 +4,7 @@
 #include <string>
 #include <map>
 #include <sstream>
+#include <iostream>
 
 class Request {
 public:
@@ -19,9 +20,9 @@ public:
 		: method("GET"), uri("/"), http_version("HTTP/1.1"), body("") {}
 
 	// --- Core Functions ---
-	bool parse(const std::string &raw_request) { (void)raw_request; }// Parse raw HTTP request
-	bool isValid() const {} // Basic validation
-	void clear() {} // Reset for reuse
+	bool parse(const std::string &raw_request); // Parse raw HTTP request
+	bool isValid(); // Basic validation
+	void clear(); // Reset for reuse
 };
 
 #endif // REQUEST_HPP

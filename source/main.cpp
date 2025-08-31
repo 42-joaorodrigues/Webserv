@@ -11,9 +11,12 @@
 /* ************************************************************************** */
 
 #include "../include/webserv.hpp"
+#include "Request.hpp"
 
-int main(int argc, char *argv[]) {
-	std::cout << "Webserv is starting..." << std::endl;
+int main(int argc, char *argv[])
+{
+	std::cout << "Webserver is starting..." << std::endl;
+
 
 	try {
 		std::string config_file;
