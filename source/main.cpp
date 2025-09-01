@@ -15,7 +15,29 @@
 
 int main(int argc, char *argv[])
 {
+	Request req;
 	std::cout << "Webserver is starting..." << std::endl;
+
+	std::string raw_header =
+		"POST /login HTTP/1.1\r\n"
+"Host: example.com\r\n"
+"Content-Type: application/x-www-form-urlencoded\r\n"
+"Content-Length: 27\r\n"
+"\r\n"
+"username=testando&password=1234\r\n";
+
+	req.parse(raw_header);
+
+	std::cout << "method" << " " << req.method << std::endl;
+	std::cout << "urio" << " " << req.uri << std::endl;
+	std::cout << "http version" << " " << req.http_version << std::endl;
+	std::cout << "body" << " " << req.body << std::endl;
+	std::cout << "headers:" << std::endl;
+	for (std::map<std::string, std::string>::iterator it = req.headers.begin(); it != req.headers.end(); ++it) {
+    	std::cout << "  " << it->first << ": " << it->second << std::endl;
+	}
+
+
 
 
 	try {

@@ -5,6 +5,7 @@
 #include <map>
 #include <sstream>
 #include <iostream>
+#include <cstdlib> 
 
 class Request {
 public:
@@ -16,8 +17,7 @@ public:
 	std::string body;
 
 	// --- Constructors ---
-	Request()
-		: method("GET"), uri("/"), http_version("HTTP/1.1"), body("") {}
+	Request();
 
 	// --- Core Functions ---
 	bool parse(const std::string &raw_request); // Parse raw HTTP request
