@@ -6,6 +6,7 @@
 #include <sstream>
 #include <iostream>
 #include <cstdlib> 
+#include <limits>
 
 class Request {
 public:
@@ -23,6 +24,9 @@ public:
 	bool parse(const std::string &raw_request); // Parse raw HTTP request
 	bool isValid(); // Basic validation
 	void clear(); // Reset for reuse
+	std::string dechunk(const std::string &chunk);
+	bool isValidChunkSizeLine(const std::string &line);
+	
 };
 
 #endif // REQUEST_HPP

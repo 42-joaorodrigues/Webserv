@@ -27,6 +27,29 @@ body {
     height: 100%;
 }
 
+
+.lula-404-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding-top: 50px;
+  position: relative;
+  left: -200px;
+}
+
+.lula-left,
+.lula-center,
+.lula-right {
+  height: 250px; /* Adjust as needed */
+}
+
+.lula-center {
+  margin: 0 px;
+}
+
 #countUp {
     display: flex;
     flex-direction: column;
@@ -44,6 +67,7 @@ body {
     }
     
     .text {
+        margin-top: 10px;
         font-weight: 300;
         text-align: center;
     }

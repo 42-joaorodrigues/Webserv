@@ -12,32 +12,33 @@
 
 #include "../include/webserv.hpp"
 #include "Request.hpp"
+#include <iostream>
+#include <cassert>
+
+
 
 int main(int argc, char *argv[])
 {
-	Request req;
+	Request pika;
 	std::cout << "Webserver is starting..." << std::endl;
 
-	std::string raw_header =
-		"POST /login HTTP/1.1\r\n"
-"Host: example.com\r\n"
-"Content-Type: application/x-www-form-urlencoded\r\n"
-"Content-Length: 27\r\n"
+	std::string raw_request =
+"POST /echo HTTP/1.1\r\n"
+"Host: localhost:8080\r\n"
+"User-Agent: test-client/1.0\r\n"
+"Transfer-Encoding: chunked\r\n"
+"Content-Type: text/plain\r\n"
 "\r\n"
-"username=testando&password=1234\r\n";
+"4\r\n"
+"Wiki\r\n"
+"5\r\n"
+"pedia\r\n"
+"0\r\n"
+"\r\n";
 
-	req.parse(raw_header);
-
-	std::cout << "method" << " " << req.method << std::endl;
-	std::cout << "urio" << " " << req.uri << std::endl;
-	std::cout << "http version" << " " << req.http_version << std::endl;
-	std::cout << "body" << " " << req.body << std::endl;
-	std::cout << "headers:" << std::endl;
-	for (std::map<std::string, std::string>::iterator it = req.headers.begin(); it != req.headers.end(); ++it) {
-    	std::cout << "  " << it->first << ": " << it->second << std::endl;
-	}
-
-
+	
+	pika.parse(raw_request);
+	pika.isValid();
 
 
 	try {
@@ -52,7 +53,7 @@ int main(int argc, char *argv[])
 		}
 
 		Config config(config_file);
-		config.printConfig();
+		//config.printConfig();
 
 		Socket socket(config);
 
