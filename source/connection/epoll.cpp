@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   epoll.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: naiqing <naiqing@student.42.fr>            +#+  +:+       +#+        */
+/*   By: fsilva-p <fsilva-p@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/06 14:53:35 by naiqing           #+#    #+#             */
-/*   Updated: 2025/08/09 11:31:25 by naiqing          ###   ########.fr       */
+/*   Updated: 2025/09/03 15:30:47 by fsilva-p         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -163,7 +163,7 @@ int waitEpoll(Socket &socket)
 			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 			return ERROR;
 		}
-		// else
+		else
 		// //if this fd is not a listening socket, or stdin, it must be a connection that is ready to connected
 		// {
 		// 	// TODO: // Handle the connection ready to be read with http
