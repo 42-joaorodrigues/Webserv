@@ -6,13 +6,63 @@
 /*   By: fsilva-p <fsilva-p@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/06 14:53:35 by naiqing           #+#    #+#             */
-/*   Updated: 2025/09/03 15:30:47 by fsilva-p         ###   ########.fr       */
+/*   Updated: 2025/09/04 21:01:49 by fsilva-p         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../include/webserv.hpp"
 #include "socket.hpp"
+#include "../server/Request.hpp"
 
+#include <sstream> // for std::ostringstream
+
+
+
+
+int handleHttpRequest(int client_fd, Socket &socket)
+{
+    char buffer[9192];
+    std::string rawRequest;
+    Request Req;
+    std::string ErrorResponse;
+    ssize_t buffer_read;
+
+
+    buffer_read = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
+
+    if (buffer_read > 0)
+    {
+        buffer[buffer_read] = '\0';
+        rawRequest = std::string(buffer);
+        if (!Req.parse(rawRequest))
+        {
+            ErrorResponse = "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\n\r\n";
+            send(client_fd, ErrorResponse.c_str(), ErrorResponse.length(), 0);
+            return ERROR;
+        }
+        int serverid = socket.getConnection(client_fd);
+        std::string response = 
+        send(); // Send the response!
+        close(client_fd);
+        epoll_ctl(socket.getEpollfd(),EPOLL_CTL_DEL, client_fd, NULL);
+        return OK;
+
+    }
+    else if (buffer_read == 0)
+    {
+        return ERROR;
+    }
+    else
+    {
+        if (errno != EAGAIN && errno != EWOULDBLOCK)
+        {
+            perror("recv");
+            return ERROR;
+        }
+        return OK; // Would block, try again later
+        
+    }
+}
 void initEpollEvent(struct epoll_event *event, uint32_t events, int fd)
 {
     memset(event, 0, sizeof(*event)); // Clear the event structure
@@ -48,7 +98,7 @@ int initConnection(Socket &socket, int i)
 
     if ((newFd = accept(socket.getSocket(i), (struct sockaddr *)&addr, &in_len)) < 0) // Accept the new connection
     {
-		//EAGAIN and EWOULDBLOCK are not errors, they just mean no more connections to accept
+		//EAGAIN and EWOULDBLOCKare not errors, they just mean no more connections to accept
         if (errno == EAGAIN || errno == EWOULDBLOCK)
         {
             // No more connections to accept
@@ -164,10 +214,17 @@ int waitEpoll(Socket &socket)
 			return ERROR;
 		}
 		else
-		// //if this fd is not a listening socket, or stdin, it must be a connection that is ready to connected
-		// {
-		// 	// TODO: // Handle the connection ready to be read with http
-		// }
+        {
+            if (events[j].events & EPOLLIN)
+            {
+                if (handleHttpRequest(events[j].data.fd, socket) < 0)
+                {
+                    // Close connection on error
+                    close(events[j].data.fd);
+                    epoll_ctl(socket.getEpollfd(), EPOLL_CTL_DEL, events[j].data.fd, NULL);
+                }
+            }
+        }
 	}
 	return OK;
 }

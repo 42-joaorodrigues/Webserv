@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to WebServ</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .info {
+            background-color: #e7f3ff;
+            padding: 15px;
+            border-left: 4px solid #2196F3;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Welcome to WebServ!</h1>
+        <p>Congratulations! Your custom HTTP server is running successfully.</p>
+        
+        <div class="info">
+            <strong>Server Info:</strong><br>
+            • HTTP/1.1 Compatible<br>
+            • Epoll-based Event Handling<br>
+            • CGI Support Available<br>
+            • Static File Serving<br>
+        </div>
+        
+        <h2>Test Pages</h2>
+        <ul>
+            <li><a href="/">Home (this page)</a></li>
+            <li><a href="/test.html">Test page</a> (will show 404)</li>
+            <li><a href="/about">About page</a> (will show 404)</li>
+        </ul>
+        
+        <p><em>Powered by your custom C++ webserver implementation!</em></p>
+    </div>
+</body>
+</html>

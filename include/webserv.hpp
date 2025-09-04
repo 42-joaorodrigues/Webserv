@@ -22,6 +22,7 @@
 #include "../source/server/server.hpp" // For server class
 #include "../source/connection/socket.hpp" // For socket class
 #include "../source/config/config.hpp" // For config class
+#include "../source/server/Request.hpp"
 
 class Socket;
 class Server;
@@ -32,5 +33,8 @@ class Server;
 
 int		setNonBlocking(int fd);
 int		initEpoll(Socket &socket);
+int handleHttpRequest(int client_fd, Socket &socket);
+std::string getContentType(const std::string& filepath);
+std::string generateResponse(const Request& request, int serverId);
 
 #endif

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   socket.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: naiqing <naiqing@student.42.fr>            +#+  +:+       +#+        */
+/*   By: fsilva-p <fsilva-p@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/07 11:08:21 by nacao             #+#    #+#             */
-/*   Updated: 2025/08/09 11:00:34 by naiqing          ###   ########.fr       */
+/*   Updated: 2025/09/04 20:12:25 by fsilva-p         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,6 +54,7 @@ class Socket
 		void			setAddress(int port, const char *ip);
 		const sockaddr_in		&getAddress(size_t index) const;
 		socklen_t		getAddressLength(size_t index) const;
+		
 
 };
 

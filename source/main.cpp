@@ -19,13 +19,8 @@
 
 int main(int argc, char *argv[])
 {
-	Request pika;
-	std::cout << "Webserver is starting..." << std::endl;
-
-
-	pika.parse(raw_request);
-	pika.isValid();
-
+	
+	std::cout << "Webserver is starting..." << std::endl;	
 
 	try {
 		std::string config_file;
