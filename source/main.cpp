@@ -19,27 +19,8 @@
 
 int main(int argc, char *argv[])
 {
-	Request pika;
-	std::cout << "Webserver is starting..." << std::endl;
-
-	std::string raw_request =
-"POST /echo HTTP/1.1\r\n"
-"Host: localhost:8080\r\n"
-"User-Agent: test-client/1.0\r\n"
-"Transfer-Encoding: chunked\r\n"
-"Content-Type: text/plain\r\n"
-"\r\n"
-"4\r\n"
-"Wiki\r\n"
-"5\r\n"
-"pedia\r\n"
-"0\r\n"
-"\r\n";
-
 	
-	pika.parse(raw_request);
-	pika.isValid();
-
+	std::cout << "Webserver is starting..." << std::endl;	
 
 	try {
 		std::string config_file;
