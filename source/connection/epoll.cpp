@@ -132,14 +132,6 @@ int waitEpoll(Socket &socket)
     struct epoll_event  events[MAX_EVENTS]; // Array to hold the events
     int nfds = 0;
     int i = 0;
-
-    //main loop, wait for events
-    if ((nfds = epoll_wait(socket.getEpollfd(), events, MAX_EVENTS, -1)) < 0)
-    {
-        perror("epoll_wait");
-        return ERROR;
-    }
-
     for (int j = 0; j < nfds; j++)
     {
         //check if the event is for a listening socket
