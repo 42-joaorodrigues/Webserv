@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   socket.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: naiqing <naiqing@student.42.fr>            +#+  +:+       +#+        */
+/*   By: fsilva-p <fsilva-p@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/07 11:08:49 by nacao             #+#    #+#             */
-/*   Updated: 2025/08/09 11:18:44 by naiqing          ###   ########.fr       */
+/*   Updated: 2025/09/08 16:44:16 by fsilva-p         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -184,4 +184,12 @@ Socket &Socket::operator=(const Socket &other)
 		this->_addr = other._addr;
 	}
 	return *this;
+}
+
+const Server& Socket::getServer(int serverId) const
+{
+	if (serverId >= 0 && serverId < static_cast<int>(_server.size()))
+		return _server[serverId];
+	// Return first server as fallback if serverId is invalid
+	return _server[0];
 }

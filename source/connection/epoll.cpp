@@ -6,16 +6,57 @@
 /*   By: fsilva-p <fsilva-p@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/06 14:53:35 by naiqing           #+#    #+#             */
-/*   Updated: 2025/09/04 21:01:49 by fsilva-p         ###   ########.fr       */
+/*   Updated: 2025/09/08 19:57:59 by fsilva-p         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../include/webserv.hpp"
 #include "socket.hpp"
 #include "../server/Request.hpp"
+#include "../server/Response.hpp"
 
 #include <sstream> // for std::ostringstream
 
+std::string geterrorpage(int errorcode, int serverid, Socket &socket)
+{
+    std::string errorpagepath;
+    const Server& server = socket.getServer(serverid);
+    const std::map<int, std::string>& errorPages = server.getErrorPages();
+    std::map<int, std::string>::const_iterator it = errorPages.find(errorcode);
+    
+    if (it != errorPages.end())
+    {
+        errorpagepath = it->second; // Get the path from config (e.g., "/errors/404/404.html")
+        
+        // Convert config path to actual file path
+        if (!errorpagepath.empty())
+        {
+            if (errorpagepath[0] == '/')
+            {
+                // Config path starts with '/', combine with server root
+                std::string serverRoot = server.getRoot(); // Should return "./www/default"
+                errorpagepath = serverRoot + errorpagepath; // Result: "./www/default/errors/404/404.html"
+            }
+            // If path doesn't start with '/', it's already a full path
+        }
+    }
+    if (!errorpagepath.empty())
+    {
+        std::ifstream file(errorpagepath.c_str());
+        if (file.is_open())
+        {
+            std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+            file.close();
+            std::cout << "Successfully loaded custom error page for " << errorcode << std::endl;
+            return content;
+        }
+        else
+        {
+            std::cout << "Could not open custom error page: " << errorpagepath << std::endl;
+        }
+    }
+    return " ";
+}
 
 
 
@@ -24,9 +65,7 @@ int handleHttpRequest(int client_fd, Socket &socket)
     char buffer[9192];
     std::string rawRequest;
     Request Req;
-    std::string ErrorResponse;
     ssize_t buffer_read;
-
 
     buffer_read = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
 
@@ -34,22 +73,98 @@ int handleHttpRequest(int client_fd, Socket &socket)
     {
         buffer[buffer_read] = '\0';
         rawRequest = std::string(buffer);
+        int serverid = socket.getConnection(client_fd);
+        
+        // 400 Bad Request - Request parsing failed
         if (!Req.parse(rawRequest))
         {
-            ErrorResponse = "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\n\r\n";
-            send(client_fd, ErrorResponse.c_str(), ErrorResponse.length(), 0);
+            Response errorResponse;
+            errorResponse.setStatus(400, "Bad Request");
+            std::string errorContent = geterrorpage(400, serverid, socket);
+            errorResponse.setBody(errorContent, "text/html");
+            std::string responseStr = errorResponse.toString();
+            send(client_fd, responseStr.c_str(), responseStr.length(), 0);
+            close(client_fd);
+            epoll_ctl(socket.getEpollfd(),EPOLL_CTL_DEL, client_fd, NULL);
             return ERROR;
         }
-        int serverid = socket.getConnection(client_fd);
-        std::string response = 
-        send(); // Send the response!
+        
+        Response response;
+        
+        // Check if HTTP method is supported (example: only GET, POST, DELETE)
+        if (Req.method != "GET" && Req.method != "POST" && Req.method != "DELETE")
+        {
+            // 405 Method Not Allowed
+            response.setStatus(405, "Method Not Allowed");
+            std::string errorContent = geterrorpage(405, serverid, socket);
+            response.setBody(errorContent, "text/html");
+        }
+        else
+        {
+            std::string requestedPath = Req.uri;
+            if (requestedPath == "/")
+                requestedPath = "/index.html";
+            std::string filePath = "./www" + requestedPath;
+            
+            // Try to open and read the file
+            std::ifstream file(filePath.c_str());
+            if (file.is_open())
+            {
+                // File exists, read its content
+                std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+                file.close();
+                
+                // Check if file is empty (could be a permission issue)
+                if (content.empty())
+                {
+                    // 403 Forbidden - File exists but can't read (permission issue)
+                    response.setStatus(403, "Forbidden");
+                    std::string errorContent = geterrorpage(403, serverid, socket);
+                    response.setBody(errorContent, "text/html");
+                }
+                else
+                {
+                    // Determine content type based on file extension
+                    std::string contentType = "text/html";
+                    if (requestedPath.find(".css") != std::string::npos)
+                        contentType = "text/css";
+                    else if (requestedPath.find(".js") != std::string::npos)
+                        contentType = "application/javascript";
+                    else if (requestedPath.find(".jpg") != std::string::npos || requestedPath.find(".jpeg") != std::string::npos)
+                        contentType = "image/jpeg";
+                    else if (requestedPath.find(".png") != std::string::npos)
+                        contentType = "image/png";
+                    else if (requestedPath.find(".ico") != std::string::npos)
+                        contentType = "image/x-icon";
+                    
+                    // 200 OK - Success
+                    response.setStatus(200, "OK");
+                    response.setBody(content, contentType);
+                }
+            }
+            else
+            {
+                // 404 Not Found - File doesn't exist
+                response.setStatus(404, "Not Found");
+                std::string errorContent = geterrorpage(404, serverid, socket);
+                response.setBody(errorContent, "text/html");
+            }
+        }
+        
+        // Send the response
+        std::string responseStr = response.toString();
+        if (send(client_fd, responseStr.c_str(), responseStr.length(), 0) < 0)
+        {
+            perror("send");
+        }
+        
         close(client_fd);
         epoll_ctl(socket.getEpollfd(),EPOLL_CTL_DEL, client_fd, NULL);
         return OK;
-
     }
     else if (buffer_read == 0)
     {
+        // Client closed connection
         return ERROR;
     }
     else
@@ -60,7 +175,6 @@ int handleHttpRequest(int client_fd, Socket &socket)
             return ERROR;
         }
         return OK; // Would block, try again later
-        
     }
 }
 void initEpollEvent(struct epoll_event *event, uint32_t events, int fd)
@@ -180,8 +294,15 @@ int createSocketEpoll(Socket &socket)
 int waitEpoll(Socket &socket)
 {
     struct epoll_event  events[MAX_EVENTS]; // Array to hold the events
-    int nfds = 0;
+    int nfds = epoll_wait(socket.getEpollfd(), events, MAX_EVENTS, -1);
     int i = 0;
+    
+    if (nfds < 0)
+    {
+        perror("epoll_wait");
+        return ERROR;
+    }
+    
     for (int j = 0; j < nfds; j++)
     {
         //check if the event is for a listening socket
