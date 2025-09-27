@@ -10,12 +10,10 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../include/webserv.hpp"
+#include "Socket.hpp"
 #include "Request.hpp"
 #include <iostream>
 #include <cassert>
-
-
 
 int main(int argc, char *argv[])
 {

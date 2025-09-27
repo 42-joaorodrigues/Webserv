@@ -3,18 +3,18 @@
 /*                                                        :::      ::::::::   */
 /*   epoll.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: fsilva-p <fsilva-p@student.42.fr>          +#+  +:+       +#+        */
+/*   By: joao-alm <joao-alm@student.42luxembourg    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/06 14:53:35 by naiqing           #+#    #+#             */
-/*   Updated: 2025/09/08 19:57:59 by fsilva-p         ###   ########.fr       */
+/*   Updated: 2025/09/27 20:13:23 by joao-alm         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../../include/webserv.hpp"
-#include "socket.hpp"
-#include "../server/Request.hpp"
-#include "../server/Response.hpp"
-
+#include "connection.hpp"
+#include "Socket.hpp"
+#include "Server.hpp"
+#include "Response.hpp"
+#include "Request.hpp"
 #include <sstream> // for std::ostringstream
 
 std::string geterrorpage(int errorcode, int serverid, Socket &socket)

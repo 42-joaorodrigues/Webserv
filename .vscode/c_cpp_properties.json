@@ -3,9 +3,9 @@
         {
             "name": "Win32",
             "includePath": [
-				"/usr/include",
-        		"/usr/include/x86_64-linux-gnu",
-                "${workspaceFolder}/**"
+                "/usr/include",
+                "${workspaceFolder}/src",
+                "${workspaceFolder}/src/**/"
             ],
             "defines": [
                 "_DEBUG",

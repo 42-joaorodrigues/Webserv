@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   config.hpp                                         :+:      :+:    :+:   */
+/*   Config.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: naiqing <naiqing@student.42.fr>            +#+  +:+       +#+        */
+/*   By: joao-alm <joao-alm@student.42luxembourg    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/07 14:06:04 by nacao             #+#    #+#             */
-/*   Updated: 2025/08/09 10:18:27 by naiqing          ###   ########.fr       */
+/*   Updated: 2025/09/27 19:49:58 by joao-alm         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 #define CONFIG_HPP
 
 #include "Tokenizer.hpp"
-#include "../../include/webserv.hpp"
+#include "Server.hpp"
 
 struct Location;
 

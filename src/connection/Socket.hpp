@@ -1,20 +1,20 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   socket.hpp                                         :+:      :+:    :+:   */
+/*   Socket.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: fsilva-p <fsilva-p@student.42.fr>          +#+  +:+       +#+        */
+/*   By: joao-alm <joao-alm@student.42luxembourg    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/07 11:08:21 by nacao             #+#    #+#             */
-/*   Updated: 2025/09/08 16:44:16 by fsilva-p         ###   ########.fr       */
+/*   Updated: 2025/09/27 19:58:38 by joao-alm         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef SOCKET_HPP
 #define SOCKET_HPP
 
-#include "../../include/type.hpp"
-#include "../../include/webserv.hpp"
+#include "connection.hpp"
+#include "Config.hpp"
 
 class Socket
 {

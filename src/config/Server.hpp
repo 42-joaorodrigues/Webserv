@@ -1,7 +1,9 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
-#include "../../include/webserv.hpp"
+#include <string>
+#include <vector>
+#include <map>
 
 struct Redirect {
     bool exists;
