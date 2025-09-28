@@ -6,7 +6,7 @@
 /*   By: joao-alm <joao-alm@student.42luxembourg    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/07 14:06:07 by nacao             #+#    #+#             */
-/*   Updated: 2025/09/27 20:12:57 by joao-alm         ###   ########.fr       */
+/*   Updated: 2025/09/28 16:05:32 by joao-alm         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,15 +42,43 @@ Config::Config(const std::string& filename) {
 }
 
 void Config::printConfig() const {
-	std::cout << std::endl << "Servers:" << std::endl;
-	if (_servers.empty()) {
-		std::cout << "(none)" << std::endl;
-	} else {
+	if (!_servers.empty()) {
+		std::cout << std::endl << "Servers:" << std::endl;
 		for (size_t i = 0; i < _servers.size(); i++) {
-			std::cout << std::endl << "Server " << i << ":" << std::endl;
+			std::cout << "Server " << i << ":" << std::endl;
 			_servers[i].printServer();
 		}
 	}
+}
+
+bool Config::match(const std::string& value) {
+	if (_pos < _tokens.size() && _tokens[_pos]._value == value) {
+		return true;
+	}
+	return false;
+}
+
+const Token& Config::peek() const {
+	if (_pos >= _tokens.size()) {
+		throw std::runtime_error("Unexpected end of tokens");
+	}
+	return _tokens[_pos];
+}
+
+void Config::expect(const std::string& value) {
+	if (!match(value)) {
+		size_t old_pos = _pos > 0 ? _pos - 1 : _pos;
+		Token old_token = _tokens[old_pos];
+
+		std::ostringstream oss;
+		oss << "Expected '" << value << "' at line " << old_token._line
+			<< " col " << old_token._col + old_token._value.length();
+		throw std::runtime_error(oss.str());
+	}
+}
+
+void Config::advance() {
+	_pos++;
 }
 
 void Config::parseServer(Server& server) {
@@ -183,15 +211,15 @@ void Config::parseBodySize(Server& server) {
 		}
 	}
 
-	server.setClientMaxBodySize(static_cast<size_t>(value) * multiplier);
+	server.setClientMaxBodySize(static_cast<ssize_t>(value) * multiplier);
 	advance();
 	expect(";");
 }
 
 void Config::parseLocation(Server& server) {
-	Location location;
+	LocationData loc_data;
 
-	location.path = peek()._value;
+	std::string path = peek()._value;
 	advance();
 	expect("{");
 	advance();
@@ -201,14 +229,14 @@ void Config::parseLocation(Server& server) {
 		std::string key = key_tkn._value;
 		advance();
 
-		if (key == "allow_methods") parseLocMethods(location);
-		else if (key == "root") parseLocRoot(location);
-		else if (key == "index") parseLocIndex(location);
-		else if (key == "autoindex") parseLocAutoIndex(location);
-		else if (key == "upload_store") parseLocUpload(location);
-		else if (key == "return") parseLocRedirect(location);
-		else if (key == "cgi_extension") parseLocCgiExt(location);
-		else if (key == "cgi_pass") parseLocCgiPath(location);
+		if (key == "allow_methods") parseLocMethods(loc_data);
+		else if (key == "root") parseLocRoot(loc_data);
+		else if (key == "index") parseLocIndex(loc_data);
+		else if (key == "autoindex") parseLocAutoIndex(loc_data);
+		else if (key == "upload_store") parseLocUpload(loc_data);
+		else if (key == "return") parseLocRedirect(loc_data);
+		else if (key == "cgi_pass") parseLocCgiPass(loc_data);
+		else if (key == "cgi_extension") parseLocCgiExt(loc_data);
 		else {
 			std::ostringstream oss;
 			oss << "Unknown directive '" << key << "' at line " << key_tkn._line;
@@ -217,29 +245,30 @@ void Config::parseLocation(Server& server) {
 		advance();
 	}
 
-	server.addLocation(location);
+	server.addLocation(path, loc_data);
 }
 
-void Config::parseLocMethods(Location& location) {
+void Config::parseLocMethods(LocationData& loc_data) {
 	while (!match(";")) {
-		location.methods.push_back(peek()._value);
+		loc_data.methods.push_back(peek()._value);
 		advance();
 	}
 }
 
-void Config::parseLocRoot(Location& location) {
-	location.root = peek()._value;
+void Config::parseLocRoot(LocationData& loc_data) {
+	loc_data.root = peek()._value;
 	advance();
 	expect(";");
 }
 
-void Config::parseLocIndex(Location& location) {
-	location.index = peek()._value;
-	advance();
-	expect(";");
+void Config::parseLocIndex(LocationData& loc_data) {
+	while (!match(";")) {
+		loc_data._indexes.push_back(peek()._value);
+		advance();
+	}
 }
 
-void Config::parseLocAutoIndex(Location& location) {
+void Config::parseLocAutoIndex(LocationData& loc_data) {
 	std::string value;
 	value = peek()._value;
 
@@ -249,21 +278,19 @@ void Config::parseLocAutoIndex(Location& location) {
 			<< "'. Valid options: <on/off> (case sensitive)" << std::endl;
 		throw std::runtime_error(oss.str());
 	}
-	location.autoindex = value == "on";
+	loc_data.autoindex = value == "on";
 
 	advance();
 	expect(";");
 }
 
-void Config::parseLocUpload(Location& location) {
-	location.upload_store = peek()._value;
+void Config::parseLocUpload(LocationData& loc_data) {
+	loc_data.upload_store = peek()._value;
 	advance();
 	expect(";");
 }
 
-void Config::parseLocRedirect(Location& location) {
-	location.redirect.exists = true;
-
+void Config::parseLocRedirect(LocationData& loc_data) {
 	// code
 	std::string value = peek()._value;
 	for (size_t i = 0; i < value.length(); i++) {
@@ -273,53 +300,22 @@ void Config::parseLocRedirect(Location& location) {
 			throw std::runtime_error(oss.str());
 		}
 	}
-	location.redirect.code = std::atoi(value.c_str());
+	int code = std::atoi(value.c_str());
 	advance();
 
-	location.redirect.target = peek()._value;
-	advance();
-	expect(";");
-}
-
-void Config::parseLocCgiExt(Location& location) {
-	location.cgi_extension = peek()._value;
+	loc_data.redirect[code] = peek()._value;
 	advance();
 	expect(";");
 }
 
-void Config::parseLocCgiPath(Location& location) {
-	location.cgi_path = peek()._value;
+void Config::parseLocCgiPass(LocationData& loc_data) {
+	loc_data.cgi_pass = peek()._value;
 	advance();
 	expect(";");
 }
 
-
-bool Config::match(const std::string& value) {
-	if (_pos < _tokens.size() && _tokens[_pos]._value == value) {
-		return true;
-	}
-	return false;
-}
-
-const Token& Config::peek() const {
-	if (_pos >= _tokens.size()) {
-		throw std::runtime_error("Unexpected end of tokens");
-	}
-	return _tokens[_pos];
-}
-
-void Config::expect(const std::string& value) {
-	if (!match(value)) {
-		size_t old_pos = _pos > 0 ? _pos - 1 : _pos;
-		Token old_token = _tokens[old_pos];
-
-		std::ostringstream oss;
-		oss << "Expected '" << value << "' at line " << old_token._line
-			<< " col " << old_token._col + old_token._value.length();
-		throw std::runtime_error(oss.str());
-	}
-}
-
-void Config::advance() {
-	_pos++;
+void Config::parseLocCgiExt(LocationData& loc_data) {
+	loc_data.cgi_extension = peek()._value;
+	advance();
+	expect(";");
 }

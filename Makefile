@@ -9,7 +9,7 @@ CPPFLAG		+= $(INCLUDES)
 SRCS		= src/main.cpp \
 			  src/cgi/CGIHandler.cpp \
 			  src/config/Config.cpp src/config/Server.cpp src/config/Tokenizer.cpp \
-			  src/connection/epoll.cpp src/connection/Socket.cpp \
+			  src/connection/epoll.cpp src/connection/Socket.cpp src/connection/LocationMatcher.cpp \
 			  src/server/ErrorPage.cpp src/server/Request.cpp src/server/Response.cpp
 OBJDIR		= obj
 OBJS		= $(SRCS:%.cpp=$(OBJDIR)/%.o)

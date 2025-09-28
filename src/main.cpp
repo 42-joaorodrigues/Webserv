@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
 		}
 
 		Config config(config_file);
-		//config.printConfig();
+		// config.printConfig();
 
 		Socket socket(config);
 

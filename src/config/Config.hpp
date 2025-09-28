@@ -6,7 +6,7 @@
 /*   By: joao-alm <joao-alm@student.42luxembourg    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/07 14:06:04 by nacao             #+#    #+#             */
-/*   Updated: 2025/09/27 19:49:58 by joao-alm         ###   ########.fr       */
+/*   Updated: 2025/09/28 15:32:55 by joao-alm         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@
 #include "Tokenizer.hpp"
 #include "Server.hpp"
 
-struct Location;
+struct LocationData;
 
 class Config {
 	std::vector<Server> _servers;
@@ -51,14 +51,14 @@ private:
 	// location parsers
 	void parseLocation(Server& server);
 
-	void parseLocMethods(Location& location);
-	void parseLocRoot(Location& location);
-	void parseLocIndex(Location& location);
-	void parseLocAutoIndex(Location& location);
-	void parseLocUpload(Location& location);
-	void parseLocRedirect(Location& location);
-	void parseLocCgiExt(Location& location);
-	void parseLocCgiPath(Location& location);
+	void parseLocMethods(LocationData& loc_data);
+	void parseLocRoot(LocationData& loc_data);
+	void parseLocIndex(LocationData& loc_data);
+	void parseLocAutoIndex(LocationData& loc_data);
+	void parseLocUpload(LocationData& loc_data);
+	void parseLocRedirect(LocationData& loc_data);
+	void parseLocCgiPass(LocationData& loc_data);
+	void parseLocCgiExt(LocationData& loc_data);
 	// ---
 };
 
