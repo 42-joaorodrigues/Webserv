@@ -6,7 +6,7 @@
 /*   By: fsilva-p <fsilva-p@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/06 14:53:35 by naiqing           #+#    #+#             */
-/*   Updated: 2025/09/08 19:57:59 by fsilva-p         ###   ########.fr       */
+/*   Updated: 2025/09/26 18:06:10 by fsilva-p         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -95,6 +95,14 @@ int handleHttpRequest(int client_fd, Socket &socket)
         if (Req.method != "GET" && Req.method != "POST" && Req.method != "DELETE")
         {
             // 405 Method Not Allowed
+            response.setStatus(405, "Method Not Allowed");
+            std::string errorContent = geterrorpage(405, serverid, socket);
+            response.setBody(errorContent, "text/html");
+        }
+        // Check location-specific method restrictions
+        else if (Req.uri == "/" && Req.method != "GET")
+        {
+            // 405 Method Not Allowed - Root path only allows GET
             response.setStatus(405, "Method Not Allowed");
             std::string errorContent = geterrorpage(405, serverid, socket);
             response.setBody(errorContent, "text/html");

@@ -3,144 +3,594 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Webserv - Custom HTTP Server</title>
+    <title>WebServ</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <header class="hero">
-            <div class="hero-content">
-                <h1 class="title">Webserv</h1>
-                <p class="subtitle">A High-Performance HTTP Server Built from Scratch</p>
-                <div class="tech-stack">
-                    <span class="tech-tag">C++98</span>
-                    <span class="tech-tag">Epoll</span>
-                    <span class="tech-tag">Non-blocking I/O</span>
-                    <span class="tech-tag">CGI Support</span>
-                </div>
-            </div>
-        </header>
-
-        <section class="features">
-            <h2>Features</h2>
-            <div class="feature-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">⚡</div>
-                    <h3>High Performance</h3>
-                    <p>Built with epoll for efficient event-driven I/O handling</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🔧</div>
-                    <h3>Configurable</h3>
-                    <p>NGINX-style configuration with virtual hosts support</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🌐</div>
-                    <h3>HTTP/1.1</h3>
-                    <p>Full HTTP/1.1 compliance with GET, POST, DELETE methods</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">📁</div>
-                    <h3>File Serving</h3>
-                    <p>Static file serving with directory listing and custom error pages</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🔄</div>
-                    <h3>CGI Support</h3>
-                    <p>Execute PHP and Python scripts through CGI interface</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">📤</div>
-                    <h3>File Upload</h3>
-                    <p>Handle file uploads with configurable size limits</p>
-                </div>
-            </div>
-        </section>
-
-        <section class="about">
-            <h2>About the Project</h2>
-            <p>Webserv is a custom HTTP server implementation created as part of the 42 School curriculum. This project demonstrates advanced C++ programming concepts, network programming, and system-level understanding of how web servers operate.</p>
-            
-            <div class="stats">
-                <div class="stat">
-                    <span class="stat-number">Multiple</span>
-                    <span class="stat-label">Virtual Hosts</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-number">Non-blocking</span>
-                    <span class="stat-label">I/O Operations</span>
-                </div>
-            </div>
-        </section>
-
-        <section class="team">
-            <h2>Meet the Development Team</h2>
-            <div class="team-grid">
-                <div class="team-member">
-                    <div class="member-photo">
-                        <img src="images/joao-alm.jpg" alt="Joao" />
-                        <div class="photo-placeholder">📸</div>
-                    </div>
-                    <h3>Joao</h3>
-                    <p class="role">Configuration & CGI Implementation</p>
-                    <p class="description">Lead developer for server configuration and CGI support</p>
-                </div>
-                <div class="team-member">
-                    <div class="member-photo">
-                        <img src="images/nacao.jpg" alt="Naiqing" />
-                        <div class="photo-placeholder">📸</div>
-                    </div>
-                    <h3>Naiqing</h3>
-                    <p class="role">Core Architecture & Networking</p>
-                    <p class="description">Specialized in epoll implementation and socket management</p>
-                </div>
-                <div class="team-member">
-                    <div class="member-photo">
-                        <img src="images/fsilva-p.jpg" alt="Fabio" />
-                        <div class="photo-placeholder">📸</div>
-                    </div>
-                    <h3>Fabio</h3>
-                   <p class="role">HTTP Protocol & Request Parsing</p>
-                    <p class="description">Expert in HTTP specification and request/response handling</p>
-                </div>
-            </div>
-        </section>
-
-        <footer class="footer">
-            <div class="footer-content">
-                <p>&copy; 2025 Webserv Project - Built with ❤️ at 42 School</p>
-                <div class="footer-links">
-                    <a href="#features">Features</a>
-                    <a href="#about">About</a>
-                    <a href="#team">Team</a>
-                </div>
-            </div>
-        </footer>
+    <div class="particles-background">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
     </div>
 
+    <!-- Background Music Player -->
+    <div class="music-player">
+        <button id="musicToggle" class="music-button">
+            <span class="music-icon">🎵</span>
+            <span class="music-text">Music</span>
+        </button>
+        <audio id="backgroundMusic" loop preload="auto">
+            <source src="music/background.mp3" type="audio/mpeg">
+            <source src="music/background.ogg" type="audio/ogg">
+            <!-- Fallback for browsers that don't support the audio element -->
+            Your browser does not support the audio element.
+        </audio>
+    </div>
+
+    <div class="main-container">
+        <nav class="navigation">
+            <a href="#home" class="nav-button">Home</a>
+            <a href="#team" class="nav-button">Team</a>
+            <a href="#about" class="nav-button">About</a>
+            <a href="#tests" class="nav-button">Tests</a>
+        </nav>
+        
+        <main class="content">
+            <section id="home" class="section active">
+                <h1 class="main-title">WebServ</h1>
+                <p class="subtitle">made with ❤️ by<br>Joao,Fabio and Naiqing</p>
+            </section>
+
+            <section id="team" class="section">
+                <h2>Meet Our Team</h2>
+                <div class="team-grid">
+                    <div class="team-card blue-card">
+                        <div class="card-background"></div>
+                        <div class="card-content">
+                            <div class="team-photo">
+                                <img src="images/joao-alm.jpg" alt="Joao" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                <div class="photo-placeholder">👨‍💻</div>
+                            </div>
+                            <h3>Joao</h3>
+                            <p class="role">Backend & Configuration</p>
+                            <p class="description">42 student passionate about server architecture and system configuration. Focused on performance optimization and scalable solutions.</p>
+                        </div>
+                    </div>
+
+                    <div class="team-card green-card">
+                        <div class="card-background"></div>
+                        <div class="card-content">
+                            <div class="team-photo">
+                                <img src="images/fsilva-p.jpg" alt="Fabio" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                <div class="photo-placeholder">👨‍💼</div>
+                            </div>
+                            <h3>Fabio</h3>
+                            <p class="role">HTTP Protocol & Parsing</p>
+                            <p class="description">42 student dedicated to HTTP specifications and request parsing. Passionate about robust communication protocols and clean code architecture.</p>
+                        </div>
+                    </div>
+
+                    <div class="team-card purple-card">
+                        <div class="card-background"></div>
+                        <div class="card-content">
+                            <div class="team-photo">
+                                <img src="images/nacao.jpg" alt="Naiqing" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                <div class="photo-placeholder">👩‍🔬</div>
+                            </div>
+                            <h3>Naiqing</h3>
+                            <p class="role">Network & Core Systems</p>
+                            <p class="description">42 student specializing in network programming and system-level development. Enthusiastic about epoll implementation and efficient I/O operations.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="about" class="section">
+                <h2>About WebServ</h2>
+                <div class="about-content">
+                    <div class="about-card">
+                        <div class="about-text">
+                            <h3>🚀 High-Performance HTTP Server</h3>
+                            <p>WebServ is a custom HTTP server implementation built from scratch using C++98. Our server demonstrates advanced programming concepts, network programming mastery, and deep understanding of web server architecture.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="features-grid">
+                        <div class="feature-card">
+                            <div class="feature-icon">⚡</div>
+                            <h4>Non-blocking I/O</h4>
+                            <p>Efficient event-driven architecture using epoll</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">🔧</div>
+                            <h4>NGINX-style Config</h4>
+                            <p>Familiar configuration syntax with virtual hosts</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">🌐</div>
+                            <h4>HTTP/1.1 Compliant</h4>
+                            <p>Full support for GET, POST, DELETE methods</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">📁</div>
+                            <h4>Static File Serving</h4>
+                            <p>Efficient file serving with directory listing</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">🔄</div>
+                            <h4>CGI Support</h4>
+                            <p>Execute PHP and Python scripts seamlessly</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">📤</div>
+                            <h4>File Uploads</h4>
+                            <p>Handle uploads with configurable size limits</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="tests" class="section">
+                <h2>WebServ Testing Dashboard</h2>
+                <div class="tests-content">
+                    <div class="test-intro">
+                        <p>Test all WebServ features and HTTP methods. Perfect for validating your server implementation!</p>
+                    </div>
+
+                    <!-- HTTP Methods Testing -->
+                    <div class="test-category">
+                        <h3>🌐 HTTP Methods Testing</h3>
+                        <div class="test-grid">
+                            <div class="test-item">
+                                <h4>GET Request</h4>
+                                <div class="test-controls">
+                                    <input type="text" id="getUrl" placeholder="/path/to/resource" value="/">
+                                    <button onclick="testGet()" class="test-btn get-btn">Test GET</button>
+                                </div>
+                                <div class="test-result" id="getResult"></div>
+                            </div>
+
+                            <div class="test-item">
+                                <h4>POST Request</h4>
+                                <div class="test-controls">
+                                    <input type="text" id="postUrl" placeholder="/post_body" value="/post_body">
+                                    <textarea id="postData" placeholder="Request body data..."></textarea>
+                                    <button onclick="testPost()" class="test-btn post-btn">Test POST</button>
+                                </div>
+                                <div class="test-result" id="postResult"></div>
+                            </div>
+
+                            <div class="test-item">
+                                <h4>DELETE Request</h4>
+                                <div class="test-controls">
+                                    <input type="text" id="deleteUrl" placeholder="/file/to/delete" value="/uploads/test.txt">
+                                    <button onclick="testDelete()" class="test-btn delete-btn">Test DELETE</button>
+                                </div>
+                                <div class="test-result" id="deleteResult"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- File Upload Testing -->
+                    <div class="test-category">
+                        <h3>📤 File Upload Testing</h3>
+                        <div class="upload-test">
+                            <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                                <span class="upload-icon">📁</span>
+                                <span class="upload-text">Click to select file or drag and drop</span>
+                                <input type="file" id="fileInput" style="display: none;" onchange="handleFileSelect(event)">
+                            </div>
+                            <div class="upload-controls">
+                                <input type="text" id="uploadPath" placeholder="Upload path" value="/upload">
+                                <button onclick="testUpload()" class="test-btn upload-btn">Upload File</button>
+                            </div>
+                            <div class="test-result" id="uploadResult"></div>
+                        </div>
+                    </div>
+
+                    <!-- CGI Testing -->
+                    <div class="test-category">
+                        <h3>⚙️ CGI Script Testing</h3>
+                        <div class="test-grid">
+                            <div class="test-item">
+                                <h4>Python CGI</h4>
+                                <div class="test-controls">
+                                    <input type="text" id="pythonCgiUrl" placeholder="/cgi-bin/py/script.py" value="/cgi-bin/py/test.py">
+                                    <textarea id="pythonCgiData" placeholder="CGI input data..."></textarea>
+                                    <button onclick="testPythonCgi()" class="test-btn cgi-btn">Test Python</button>
+                                </div>
+                                <div class="test-result" id="pythonCgiResult"></div>
+                            </div>
+
+                            <div class="test-item">
+                                <h4>.bla Extension</h4>
+                                <div class="test-controls">
+                                    <input type="text" id="blaUrl" placeholder="/test.bla" value="/test.bla">
+                                    <textarea id="blaData" placeholder="POST data for .bla file..."></textarea>
+                                    <button onclick="testBlaFile()" class="test-btn cgi-btn">Test .bla</button>
+                                </div>
+                                <div class="test-result" id="blaResult"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Directory Testing -->
+                    <div class="test-category">
+                        <h3>📁 Directory & Listing Testing</h3>
+                        <div class="test-grid">
+                            <div class="test-item">
+                                <h4>Directory Listing</h4>
+                                <div class="test-controls">
+                                    <input type="text" id="dirUrl" placeholder="/directory/" value="/directory/">
+                                    <button onclick="testDirectory()" class="test-btn dir-btn">Test Directory</button>
+                                </div>
+                                <div class="test-result" id="dirResult"></div>
+                            </div>
+
+                            <div class="test-item">
+                                <h4>Autoindex Test</h4>
+                                <div class="test-controls">
+                                    <input type="text" id="autoindexUrl" placeholder="/files/" value="/files/">
+                                    <button onclick="testAutoindex()" class="test-btn dir-btn">Test Autoindex</button>
+                                </div>
+                                <div class="test-result" id="autoindexResult"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Error Testing -->
+                    <div class="test-category">
+                        <h3>❌ Error Page Testing</h3>
+                        <div class="test-grid">
+                            <div class="test-item">
+                                <h4>404 Not Found</h4>
+                                <button onclick="test404()" class="test-btn error-btn">Test 404</button>
+                                <div class="test-result" id="error404Result"></div>
+                            </div>
+
+                            <div class="test-item">
+                                <h4>403 Forbidden</h4>
+                                <button onclick="test403()" class="test-btn error-btn">Test 403</button>
+                                <div class="test-result" id="error403Result"></div>
+                            </div>
+
+                            <div class="test-item">
+                                <h4>413 Payload Too Large</h4>
+                                <button onclick="test413()" class="test-btn error-btn">Test 413</button>
+                                <div class="test-result" id="error413Result"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Performance Stats -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalTests">0</div>
+                            <div class="stat-label">Tests Run</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="successfulTests">0</div>
+                            <div class="stat-label">Successful</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="avgResponseTime">0ms</div>
+                            <div class="stat-label">Avg Response Time</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    
     <script>
-        // Add smooth scrolling for navigation links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
+        // Section navigation
+        document.querySelectorAll('.nav-button').forEach(button => {
+            button.addEventListener('click', function (e) {
                 e.preventDefault();
-                document.querySelector(this.getAttribute('href')).scrollIntoView({
-                    behavior: 'smooth'
+                const targetId = this.getAttribute('href').substring(1);
+                
+                // Hide all sections
+                document.querySelectorAll('.section').forEach(section => {
+                    section.classList.remove('active');
                 });
+                
+                // Show target section
+                const targetSection = document.getElementById(targetId);
+                if (targetSection) {
+                    targetSection.classList.add('active');
+                }
+                
+                // Update active nav button
+                document.querySelectorAll('.nav-button').forEach(btn => {
+                    btn.classList.remove('active-nav');
+                });
+                this.classList.add('active-nav');
             });
         });
 
-        // Add loading animation for images
-        document.querySelectorAll('.member-photo img').forEach(img => {
+        // Image loading for team photos
+        document.querySelectorAll('.team-photo img').forEach(img => {
             img.addEventListener('load', function() {
-                this.style.opacity = '1';
+                this.style.display = 'block';
                 this.nextElementSibling.style.display = 'none';
             });
-            
-            img.addEventListener('error', function() {
-                this.style.display = 'none';
-                this.nextElementSibling.style.display = 'flex';
-            });
         });
+
+        // Background Music Controller
+        const musicToggle = document.getElementById('musicToggle');
+        const backgroundMusic = document.getElementById('backgroundMusic');
+        const musicIcon = document.querySelector('.music-icon');
+        const musicText = document.querySelector('.music-text');
+        let isPlaying = false;
+
+        musicToggle.addEventListener('click', function() {
+            if (isPlaying) {
+                backgroundMusic.pause();
+                musicIcon.textContent = '🎵';
+                musicText.textContent = 'Music';
+                musicToggle.classList.remove('playing');
+                isPlaying = false;
+            } else {
+                backgroundMusic.play().then(() => {
+                    musicIcon.textContent = '🎶';
+                    musicText.textContent = 'Playing';
+                    musicToggle.classList.add('playing');
+                    isPlaying = true;
+                }).catch(error => {
+                    console.log('Audio playback failed:', error);
+                    // Fallback: show message or handle error
+                });
+            }
+        });
+
+        // Set volume to a comfortable level
+        backgroundMusic.volume = 0.3;
+
+        // Auto-pause when page loses focus (optional)
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden && isPlaying) {
+                backgroundMusic.pause();
+            } else if (!document.hidden && isPlaying) {
+                backgroundMusic.play();
+            }
+        });
+
+        // Testing functionality
+        let testStats = {
+            total: 0,
+            successful: 0,
+            responseTimes: []
+        };
+
+        function updateStats() {
+            document.getElementById('totalTests').textContent = testStats.total;
+            document.getElementById('successfulTests').textContent = testStats.successful;
+            const avgTime = testStats.responseTimes.length > 0 
+                ? Math.round(testStats.responseTimes.reduce((a, b) => a + b, 0) / testStats.responseTimes.length)
+                : 0;
+            document.getElementById('avgResponseTime').textContent = avgTime + 'ms';
+        }
+
+        function makeRequest(method, url, data = null) {
+            const startTime = Date.now();
+            testStats.total++;
+            
+            return fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': method === 'POST' ? 'application/x-www-form-urlencoded' : undefined
+                },
+                body: data
+            }).then(response => {
+                const endTime = Date.now();
+                const responseTime = endTime - startTime;
+                testStats.responseTimes.push(responseTime);
+                
+                if (response.ok || (response.status >= 200 && response.status < 400)) {
+                    testStats.successful++;
+                }
+                
+                updateStats();
+                return response;
+            });
+        }
+
+        function displayResult(elementId, response, responseText) {
+            const resultDiv = document.getElementById(elementId);
+            const statusClass = response.ok ? 'success' : 'error';
+            resultDiv.innerHTML = `
+                <div class="result-${statusClass}">
+                    <strong>Status:</strong> ${response.status} ${response.statusText}<br>
+                    <strong>Headers:</strong> ${JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)}<br>
+                    <strong>Response:</strong> <pre>${responseText.substring(0, 500)}${responseText.length > 500 ? '...' : ''}</pre>
+                </div>
+            `;
+        }
+
+        // HTTP Method Tests
+        function testGet() {
+            const url = document.getElementById('getUrl').value;
+            makeRequest('GET', url)
+                .then(response => response.text().then(text => displayResult('getResult', response, text)))
+                .catch(error => {
+                    document.getElementById('getResult').innerHTML = `<div class="result-error">Error: ${error.message}</div>`;
+                });
+        }
+
+        function testPost() {
+            const url = document.getElementById('postUrl').value;
+            const data = document.getElementById('postData').value;
+            makeRequest('POST', url, data)
+                .then(response => response.text().then(text => displayResult('postResult', response, text)))
+                .catch(error => {
+                    document.getElementById('postResult').innerHTML = `<div class="result-error">Error: ${error.message}</div>`;
+                });
+        }
+
+        function testDelete() {
+            const url = document.getElementById('deleteUrl').value;
+            makeRequest('DELETE', url)
+                .then(response => response.text().then(text => displayResult('deleteResult', response, text)))
+                .catch(error => {
+                    document.getElementById('deleteResult').innerHTML = `<div class="result-error">Error: ${error.message}</div>`;
+                });
+        }
+
+        // File Upload
+        let selectedFile = null;
+        
+        function handleFileSelect(event) {
+            selectedFile = event.target.files[0];
+            const uploadText = document.querySelector('.upload-text');
+            if (selectedFile) {
+                uploadText.textContent = `Selected: ${selectedFile.name}`;
+            }
+        }
+
+        function testUpload() {
+            if (!selectedFile) {
+                document.getElementById('uploadResult').innerHTML = '<div class="result-error">Please select a file first</div>';
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            const url = document.getElementById('uploadPath').value;
+            
+            const startTime = Date.now();
+            testStats.total++;
+            
+            fetch(url, {
+                method: 'POST',
+                body: formData
+            }).then(response => {
+                const endTime = Date.now();
+                testStats.responseTimes.push(endTime - startTime);
+                if (response.ok) testStats.successful++;
+                updateStats();
+                
+                return response.text().then(text => displayResult('uploadResult', response, text));
+            }).catch(error => {
+                document.getElementById('uploadResult').innerHTML = `<div class="result-error">Upload failed: ${error.message}</div>`;
+            });
+        }
+
+        // CGI Tests
+        function testPythonCgi() {
+            const url = document.getElementById('pythonCgiUrl').value;
+            const data = document.getElementById('pythonCgiData').value;
+            makeRequest('POST', url, data)
+                .then(response => response.text().then(text => displayResult('pythonCgiResult', response, text)))
+                .catch(error => {
+                    document.getElementById('pythonCgiResult').innerHTML = `<div class="result-error">CGI Error: ${error.message}</div>`;
+                });
+        }
+
+        function testBlaFile() {
+            const url = document.getElementById('blaUrl').value;
+            const data = document.getElementById('blaData').value;
+            makeRequest('POST', url, data)
+                .then(response => response.text().then(text => displayResult('blaResult', response, text)))
+                .catch(error => {
+                    document.getElementById('blaResult').innerHTML = `<div class="result-error">.bla Error: ${error.message}</div>`;
+                });
+        }
+
+        // Directory Tests
+        function testDirectory() {
+            const url = document.getElementById('dirUrl').value;
+            makeRequest('GET', url)
+                .then(response => response.text().then(text => displayResult('dirResult', response, text)))
+                .catch(error => {
+                    document.getElementById('dirResult').innerHTML = `<div class="result-error">Directory Error: ${error.message}</div>`;
+                });
+        }
+
+        function testAutoindex() {
+            const url = document.getElementById('autoindexUrl').value;
+            makeRequest('GET', url)
+                .then(response => response.text().then(text => displayResult('autoindexResult', response, text)))
+                .catch(error => {
+                    document.getElementById('autoindexResult').innerHTML = `<div class="result-error">Autoindex Error: ${error.message}</div>`;
+                });
+        }
+
+        // Error Tests
+        function test404() {
+            makeRequest('GET', '/nonexistent/file/that/should/not/exist')
+                .then(response => response.text().then(text => displayResult('error404Result', response, text)))
+                .catch(error => {
+                    document.getElementById('error404Result').innerHTML = `<div class="result-error">404 Test Error: ${error.message}</div>`;
+                });
+        }
+
+        function test403() {
+            makeRequest('GET', '/forbidden/directory')
+                .then(response => response.text().then(text => displayResult('error403Result', response, text)))
+                .catch(error => {
+                    document.getElementById('error403Result').innerHTML = `<div class="result-error">403 Test Error: ${error.message}</div>`;
+                });
+        }
+
+        function test413() {
+            const largeData = 'x'.repeat(10000); // Large payload to trigger 413
+            makeRequest('POST', '/post_body', largeData)
+                .then(response => response.text().then(text => displayResult('error413Result', response, text)))
+                .catch(error => {
+                    document.getElementById('error413Result').innerHTML = `<div class="result-error">413 Test Error: ${error.message}</div>`;
+                });
+        }
+
+        // Drag and drop for file upload
+        const uploadArea = document.querySelector('.upload-area');
+        
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight(e) {
+            uploadArea.classList.add('drag-over');
+        }
+
+        function unhighlight(e) {
+            uploadArea.classList.remove('drag-over');
+        }
+
+        uploadArea.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) {
+                selectedFile = files[0];
+                document.querySelector('.upload-text').textContent = `Selected: ${selectedFile.name}`;
+            }
+        }
     </script>
 </body>
 </html>
