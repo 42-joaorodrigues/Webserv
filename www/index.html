@@ -530,7 +530,9 @@
         // Error Tests
         function test404() {
             makeRequest('GET', '/nonexistent/file/that/should/not/exist')
-                .then(response => response.text().then(text => displayResult('error404Result', response, text)))
+                .then(response => {
+                    window.location.href = 'errors/404/404.html';
+                })
                 .catch(error => {
                     document.getElementById('error404Result').innerHTML = `<div class="result-error">404 Test Error: ${error.message}</div>`;
                 });
@@ -538,7 +540,9 @@
 
         function test403() {
             makeRequest('GET', '/test/forbidden.txt')
-                .then(response => response.text().then(text => displayResult('error403Result', response, text)))
+                .then(response => {
+                    window.location.href = 'errors/403/403.html';
+                })
                 .catch(error => {
                     document.getElementById('error403Result').innerHTML = `<div class="result-error">403 Test Error: ${error.message}</div>`;
                 });
@@ -546,7 +550,9 @@
 
         function test413() {
             makeRequest('POST', '/upload', '/test/pila.txt')
-                .then(response => response.text().then(text => displayResult('error413Result', response, text)))
+                .then(response => {
+                    window.location.href = 'errors/413/413.html';
+                })
                 .catch(error => {
                     document.getElementById('error413Result').innerHTML = `<div class="result-error">413 Test Error: ${error.message}</div>`;
                 });
