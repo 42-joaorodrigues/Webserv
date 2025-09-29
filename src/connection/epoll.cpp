@@ -6,7 +6,7 @@
 /*   By: joao-alm <joao-alm@student.42luxembourg    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/06 14:53:35 by naiqing           #+#    #+#             */
-/*   Updated: 2025/09/28 19:01:38 by joao-alm         ###   ########.fr       */
+/*   Updated: 2025/09/29 17:26:09 by joao-alm         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,9 @@
 #include <sstream> // for std::ostringstream
 #include <dirent.h> // for directory operations
 #include <sys/stat.h> // for file stat
+#include <fstream> // for file I/O
+#include <cstdlib> // for mkdirs
+#include <unistd.h> // for access
 
 std::string generateDirectoryListing(const std::string& directoryPath, const std::string& requestUri) {
     DIR* dir = opendir(directoryPath.c_str());
@@ -132,7 +135,7 @@ bool isCGIRequest(const std::string& filePath, const LocationData* location) {
 // Build CGI environment variables
 std::map<std::string, std::string> buildCGIEnvironment(const Request& req, const std::string& scriptPath, const MatchedLocation& matched) {
     std::map<std::string, std::string> env;
-    
+    (void)matched;
     // Required CGI environment variables
     env["REQUEST_METHOD"] = req.method;
     env["REQUEST_URI"] = req.uri;
@@ -176,6 +179,279 @@ std::map<std::string, std::string> buildCGIEnvironment(const Request& req, const
     }
     
     return env;
+}
+
+// Structure to hold uploaded file information
+struct UploadedFile {
+    std::string filename;
+    std::string contentType;
+    std::string content;
+};
+
+// Parse multipart boundary from Content-Type header
+std::string parseMultipartBoundary(const std::string& contentType) {
+    size_t boundaryPos = contentType.find("boundary=");
+    if (boundaryPos == std::string::npos) {
+        return "";
+    }
+    
+    std::string boundary = contentType.substr(boundaryPos + 9);
+    
+    // Remove quotes if present
+    if (!boundary.empty() && boundary[0] == '"') {
+        boundary = boundary.substr(1);
+    }
+    if (!boundary.empty() && boundary[boundary.length() - 1] == '"') {
+        boundary = boundary.substr(0, boundary.length() - 1);
+    }
+    
+    return boundary;
+}
+
+// Extract filename from Content-Disposition header
+std::string extractFilename(const std::string& contentDisposition) {
+    size_t filenamePos = contentDisposition.find("filename=");
+    if (filenamePos == std::string::npos) {
+        return "";
+    }
+    
+    std::string filename = contentDisposition.substr(filenamePos + 9);
+    
+    // Remove quotes
+    if (!filename.empty() && filename[0] == '"') {
+        filename = filename.substr(1);
+    }
+    if (!filename.empty() && filename[filename.length() - 1] == '"') {
+        filename = filename.substr(0, filename.length() - 1);
+    }
+    
+    // Remove any path information for security
+    size_t lastSlash = filename.find_last_of("/\\");
+    if (lastSlash != std::string::npos) {
+        filename = filename.substr(lastSlash + 1);
+    }
+    
+    return filename;
+}
+
+// Parse multipart/form-data and extract uploaded files
+std::vector<UploadedFile> parseMultipartFormData(const std::string& body, const std::string& boundary) {
+    std::vector<UploadedFile> files;
+    
+    std::string delimiter = "--" + boundary;
+    std::string endDelimiter = "--" + boundary + "--";
+    
+    size_t pos = 0;
+    
+    while (true) {
+        // Find next part
+        size_t partStart = body.find(delimiter, pos);
+        if (partStart == std::string::npos) {
+            break;
+        }
+        
+        partStart += delimiter.length();
+        
+        // Skip CRLF after delimiter
+        if (partStart < body.length() && body[partStart] == '\r') partStart++;
+        if (partStart < body.length() && body[partStart] == '\n') partStart++;
+        
+        // Find end of this part
+        size_t partEnd = body.find(delimiter, partStart);
+        if (partEnd == std::string::npos) {
+            break;
+        }
+        
+        // Extract part content
+        std::string part = body.substr(partStart, partEnd - partStart);
+        
+        // Find headers/body separator (double CRLF)
+        size_t headerEnd = part.find("\r\n\r\n");
+        if (headerEnd == std::string::npos) {
+            headerEnd = part.find("\n\n");
+            if (headerEnd == std::string::npos) {
+                pos = partEnd;
+                continue;
+            }
+        }
+        
+        std::string headers = part.substr(0, headerEnd);
+        std::string content = part.substr(headerEnd + (part.find("\r\n\r\n") != std::string::npos ? 4 : 2));
+        
+        // Remove trailing CRLF from content
+        while (!content.empty() && (content[content.length() - 1] == '\n' || content[content.length() - 1] == '\r')) {
+            content = content.substr(0, content.length() - 1);
+        }
+        
+        // Parse headers
+        std::string contentDisposition;
+        std::string contentType = "application/octet-stream";
+        
+        std::istringstream headerStream(headers);
+        std::string line;
+        while (std::getline(headerStream, line)) {
+            // Remove carriage return
+            if (!line.empty() && line[line.length() - 1] == '\r') {
+                line = line.substr(0, line.length() - 1);
+            }
+            
+            if (line.find("Content-Disposition:") == 0) {
+                contentDisposition = line.substr(20);
+                // Trim leading space
+                while (!contentDisposition.empty() && contentDisposition[0] == ' ') {
+                    contentDisposition = contentDisposition.substr(1);
+                }
+            } else if (line.find("Content-Type:") == 0) {
+                contentType = line.substr(13);
+                // Trim leading space
+                while (!contentType.empty() && contentType[0] == ' ') {
+                    contentType = contentType.substr(1);
+                }
+            }
+        }
+        
+        // Extract filename from Content-Disposition
+        std::string filename = extractFilename(contentDisposition);
+        
+        // Only add if it's a file upload (has filename)
+        if (!filename.empty()) {
+            UploadedFile file;
+            file.filename = filename;
+            file.contentType = contentType;
+            file.content = content;
+            files.push_back(file);
+        }
+        
+        pos = partEnd;
+    }
+    
+    return files;
+}
+
+// Parse file size from config (e.g., "5M" -> 5242880 bytes)
+size_t parseFileSize(const std::string& sizeStr) {
+    if (sizeStr.empty()) {
+        return 0;
+    }
+    
+    std::string numStr = sizeStr;
+    char unit = 'B';
+    
+    if (!numStr.empty()) {
+        char lastChar = numStr[numStr.length() - 1];
+        if (lastChar == 'K' || lastChar == 'k' || lastChar == 'M' || lastChar == 'm' || 
+            lastChar == 'G' || lastChar == 'g') {
+            unit = std::toupper(lastChar);
+            numStr = numStr.substr(0, numStr.length() - 1);
+        }
+    }
+    
+    size_t size = std::atoi(numStr.c_str());
+    
+    switch (unit) {
+        case 'K': size *= 1024; break;
+        case 'M': size *= 1024 * 1024; break;
+        case 'G': size *= 1024 * 1024 * 1024; break;
+        default: break;
+    }
+    
+    return size;
+}
+
+// Check if upload is allowed for this location
+bool isUploadAllowed(const LocationData* location, const Request& req, const Server& server) {
+    if (!location || location->upload_store.empty()) {
+        return false;
+    }
+    
+    if (req.method != "POST") {
+        return false;
+    }
+    
+    // Check Content-Type (try different cases)
+    std::map<std::string, std::string>::const_iterator ctIt = req.headers.find("Content-Type");
+    if (ctIt == req.headers.end()) {
+        ctIt = req.headers.find("content-type");
+    }
+    if (ctIt == req.headers.end()) {
+        return false;
+    }
+    
+    if (ctIt->second.find("multipart/form-data") == std::string::npos) {
+        return false;
+    }
+    
+    // Check body size limit
+    ssize_t maxSize = server.getClientMaxBodySize();
+    if (maxSize > 0 && req.body.length() > static_cast<size_t>(maxSize)) {
+        return false;
+    }
+    
+    return true;
+}
+
+// Create directory recursively
+bool createDirectoryRecursive(const std::string& path) {
+    struct stat st;
+    
+    // Check if directory already exists
+    if (stat(path.c_str(), &st) == 0 && S_ISDIR(st.st_mode)) {
+        return true;
+    }
+    
+    // Try to create directory
+    if (mkdir(path.c_str(), 0755) == 0) {
+        return true;
+    }
+    
+    // If failed, try to create parent directory first
+    size_t lastSlash = path.find_last_of('/');
+    if (lastSlash != std::string::npos && lastSlash > 0) {
+        std::string parent = path.substr(0, lastSlash);
+        if (createDirectoryRecursive(parent)) {
+            return mkdir(path.c_str(), 0755) == 0;
+        }
+    }
+    
+    return false;
+}
+
+// Save uploaded file to disk
+bool saveUploadedFile(const UploadedFile& file, const std::string& uploadDir) {
+    // Ensure upload directory exists
+    if (!createDirectoryRecursive(uploadDir)) {
+        return false;
+    }
+    
+    // Generate unique filename if file already exists
+    std::string filepath = uploadDir + "/" + file.filename;
+    std::string baseName = file.filename;
+    std::string extension = "";
+    
+    size_t dotPos = baseName.find_last_of('.');
+    if (dotPos != std::string::npos) {
+        extension = baseName.substr(dotPos);
+        baseName = baseName.substr(0, dotPos);
+    }
+    
+    int counter = 1;
+    while (access(filepath.c_str(), F_OK) == 0) {
+        std::ostringstream oss;
+        oss << baseName << "_" << counter << extension;
+        filepath = uploadDir + "/" + oss.str();
+        counter++;
+    }
+    
+    // Write file to disk
+    std::ofstream outFile(filepath.c_str(), std::ios::binary);
+    if (!outFile.is_open()) {
+        return false;
+    }
+    
+    outFile.write(file.content.c_str(), file.content.length());
+    outFile.close();
+    
+    return outFile.good();
 }
 
 std::string getRedirectMessage(int code) {
@@ -266,6 +542,81 @@ void handleLocationRequest(const Request& req, const MatchedLocation& matched, i
     size_t queryPos = requestedPath.find('?');
     if (queryPos != std::string::npos) {
         requestedPath = requestedPath.substr(0, queryPos);
+    }
+    
+    // Handle file upload requests
+    if (matched.location != NULL && !matched.location->upload_store.empty()) {
+        // Get server reference to check upload constraints
+        const Server& server = socket.getServer(serverid);
+        if (isUploadAllowed(matched.location, req, server)) {
+            // Extract Content-Type header to get boundary
+            std::map<std::string, std::string>::const_iterator ctIt = req.headers.find("Content-Type");
+            if (ctIt == req.headers.end()) {
+                ctIt = req.headers.find("content-type");
+            }
+            if (ctIt != req.headers.end()) {
+                std::string boundary = parseMultipartBoundary(ctIt->second);
+                if (!boundary.empty()) {
+                    // Parse uploaded files
+                    std::vector<UploadedFile> uploadedFiles = parseMultipartFormData(req.body, boundary);
+                    
+                    // Save each uploaded file
+                    int successCount = 0;
+                    int failureCount = 0;
+                    std::ostringstream responseMessage;
+                    
+                    for (size_t i = 0; i < uploadedFiles.size(); i++) {
+                        if (saveUploadedFile(uploadedFiles[i], matched.location->upload_store)) {
+                            successCount++;
+                            responseMessage << "Successfully uploaded: " << uploadedFiles[i].filename << "<br>";
+                        } else {
+                            failureCount++;
+                            responseMessage << "Failed to upload: " << uploadedFiles[i].filename << "<br>";
+                        }
+                    }
+                    
+                    // Generate response
+                    if (successCount > 0) {
+                        std::ostringstream html;
+                        html << "<!DOCTYPE html><html><head><title>Upload Results</title></head><body>";
+                        html << "<h1>Upload Results</h1>";
+                        html << "<p>Successfully uploaded " << successCount << " file(s)</p>";
+                        if (failureCount > 0) {
+                            html << "<p>Failed to upload " << failureCount << " file(s)</p>";
+                        }
+                        html << "<hr>" << responseMessage.str();
+                        html << "<p><a href=\"" << requestedPath << "\">Back to upload form</a></p>";
+                        html << "</body></html>";
+                        
+                        response.setStatus(200, "OK");
+                        response.setBody(html.str(), "text/html");
+                    } else {
+                        response.setStatus(500, "Internal Server Error");
+                        std::string errorContent = geterrorpage(500, serverid, socket);
+                        response.setBody(errorContent, "text/html");
+                    }
+                    return;
+                } else {
+                    // Invalid multipart boundary
+                    response.setStatus(400, "Bad Request");
+                    std::string errorContent = geterrorpage(400, serverid, socket);
+                    response.setBody(errorContent, "text/html");
+                    return;
+                }
+            } else {
+                // No Content-Type header
+                response.setStatus(400, "Bad Request");
+                std::string errorContent = geterrorpage(400, serverid, socket);
+                response.setBody(errorContent, "text/html");
+                return;
+            }
+        } else if (req.method == "POST") {
+            // POST request to upload location but not allowed (size limit, wrong content type, etc.)
+            response.setStatus(413, "Payload Too Large");
+            std::string errorContent = geterrorpage(413, serverid, socket);
+            response.setBody(errorContent, "text/html");
+            return;
+        }
     }
     
     // Construct the full file path
@@ -386,6 +737,84 @@ void handleLocationRequest(const Request& req, const MatchedLocation& matched, i
                 response.setBody(errorContent, "text/html");
                 return;
             }
+        }
+    }
+    
+    // Check if this is a CGI request
+    if (isCGIRequest(filePath, matched.location)) {
+        if (matched.location->cgi_pass.empty()) {
+            // CGI extension found but no CGI interpreter configured
+            response.setStatus(500, "Internal Server Error");
+            std::string errorContent = geterrorpage(500, serverid, socket);
+            response.setBody(errorContent, "text/html");
+            return;
+        }
+        
+        try {
+            // Build CGI environment
+            std::map<std::string, std::string> cgiEnv = buildCGIEnvironment(req, filePath, matched);
+            
+            // Create CGI handler
+            CGIHandler cgiHandler(matched.location->cgi_pass, filePath, cgiEnv, req.body);
+            
+            // Execute CGI script
+            std::string cgiOutput = cgiHandler.execute();
+            
+            // Parse CGI output (headers + body)
+            size_t headerEndPos = cgiOutput.find("\r\n\r\n");
+            if (headerEndPos == std::string::npos) {
+                headerEndPos = cgiOutput.find("\n\n");
+            }
+            
+            if (headerEndPos != std::string::npos) {
+                // Parse headers from CGI output
+                std::string headers = cgiOutput.substr(0, headerEndPos);
+                std::string body = cgiOutput.substr(headerEndPos + (cgiOutput.find("\r\n\r\n") != std::string::npos ? 4 : 2));
+                
+                // Default content type
+                std::string contentType = "text/html";
+                
+                // Parse CGI headers
+                std::istringstream headerStream(headers);
+                std::string line;
+                while (std::getline(headerStream, line)) {
+                    if (!line.empty() && line[line.length() - 1] == '\r') {
+                        line = line.substr(0, line.length() - 1);
+                    }
+                    
+                    size_t colonPos = line.find(':');
+                    if (colonPos != std::string::npos) {
+                        std::string headerName = line.substr(0, colonPos);
+                        std::string headerValue = line.substr(colonPos + 1);
+                        
+                        // Trim whitespace
+                        while (!headerValue.empty() && headerValue[0] == ' ') {
+                            headerValue = headerValue.substr(1);
+                        }
+                        
+                        if (headerName == "Content-Type" || headerName == "Content-type") {
+                            contentType = headerValue;
+                        } else {
+                            response.headers[headerName] = headerValue;
+                        }
+                    }
+                }
+                
+                response.setStatus(200, "OK");
+                response.setBody(body, contentType);
+            } else {
+                // No headers, treat entire output as body
+                response.setStatus(200, "OK");
+                response.setBody(cgiOutput, "text/html");
+            }
+            return;
+            
+        } catch (const std::exception& e) {
+            // CGI execution failed
+            response.setStatus(500, "Internal Server Error");
+            std::string errorContent = geterrorpage(500, serverid, socket);
+            response.setBody(errorContent, "text/html");
+            return;
         }
     }
     

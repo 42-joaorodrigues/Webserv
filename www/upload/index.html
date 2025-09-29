@@ -1,15 +1,47 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>File Upload</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background-color: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #333; text-align: center; margin-bottom: 30px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; }
+        input[type="file"] { width: 100%; padding: 10px; border: 2px dashed #ddd; border-radius: 4px; background: #fafafa; }
+        input[type="file"]:hover { border-color: #007bff; }
+        .upload-btn { background: #007bff; color: white; padding: 12px 30px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; width: 100%; }
+        .upload-btn:hover { background: #0056b3; }
+        .info { background: #e7f3ff; padding: 15px; border-radius: 4px; margin-bottom: 20px; border-left: 4px solid #007bff; }
+        .info h3 { margin-top: 0; color: #0056b3; }
+        .info p { margin: 5px 0; color: #666; }
+    </style>
 </head>
 <body>
-    <h1>File Upload Test</h1>
-    <p>This location handles POST requests for file uploads.</p>
-    <p>Upload files to: ./uploads/</p>
-    <form method="post" enctype="multipart/form-data">
-        <input type="file" name="file">
-        <input type="submit" value="Upload">
-    </form>
+    <div class="container">
+        <h1>File Upload Test</h1>
+        
+        <div class="info">
+            <h3>Upload Information</h3>
+            <p><strong>Maximum file size:</strong> 5MB</p>
+            <p><strong>Upload directory:</strong> ./uploads</p>
+            <p><strong>Supported:</strong> Multiple files allowed</p>
+        </div>
+        
+        <form action="/upload" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="files">Select files to upload:</label>
+                <input type="file" id="files" name="files" multiple>
+            </div>
+            
+            <button type="submit" class="upload-btn">Upload Files</button>
+        </form>
+        
+        <div style="margin-top: 30px; text-align: center;">
+            <p><a href="/">&larr; Back to Home</a></p>
+        </div>
+    </div>
 </body>
 </html>
