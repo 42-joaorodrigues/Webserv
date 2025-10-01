@@ -12,13 +12,14 @@
 
 #include "Socket.hpp"
 #include "Request.hpp"
+#include "Logger.hpp"
 #include <iostream>
 #include <cassert>
 
 int main(int argc, char *argv[])
 {
 	
-	std::cout << "Webserver is starting..." << std::endl;	
+	Logger::serverStart("Initializing Servers...");	
 
 	try {
 		std::string config_file;
@@ -40,7 +41,7 @@ int main(int argc, char *argv[])
 
 		return OK;
 	} catch (const std::exception& e) {
-		std::cout << "Error: " << e.what() << std::endl;
+		Logger::error(std::string("Error: ") + e.what());
 		return 1;
 	}
 }

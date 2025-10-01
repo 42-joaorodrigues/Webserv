@@ -5,7 +5,8 @@
             "includePath": [
                 "/usr/include",
                 "${workspaceFolder}/src",
-                "${workspaceFolder}/src/**/"
+                "${workspaceFolder}/src/**/",
+                "${workspaceFolder}/src/http"
             ],
             "defines": [
                 "_DEBUG",
