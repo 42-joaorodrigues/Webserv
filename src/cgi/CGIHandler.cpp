@@ -29,6 +29,7 @@ std::string CGIHandler::execute() {
 	if (pid == 0) { // child
 		dup2(in_pipe[0], STDIN_FILENO); // read end of in_pipe redirect
 		dup2(out_pipe[1], STDOUT_FILENO); // write end of out_pipe redirect
+		dup2(out_pipe[1], STDERR_FILENO); // redirect stderr to stdout to capture all output
 
 		close(in_pipe[0]); close(in_pipe[1]);
 		close(out_pipe[0]); close(out_pipe[1]);
@@ -49,11 +50,19 @@ std::string CGIHandler::execute() {
 
 	// write body
 	if (!_body.empty()) {
-		ssize_t written = write(in_pipe[1], _body.c_str(), _body.size());
-		if (written == -1) {
-			close(in_pipe[1]);
-			close(out_pipe[0]);
-			throw std::runtime_error("failed to write to CGI");
+		size_t total_written = 0;
+		const char* data = _body.c_str();
+		size_t remaining = _body.size();
+		
+		while (remaining > 0) {
+			ssize_t written = write(in_pipe[1], data + total_written, remaining);
+			if (written == -1) {
+				close(in_pipe[1]);
+				close(out_pipe[0]);
+				throw std::runtime_error("failed to write to CGI");
+			}
+			total_written += written;
+			remaining -= written;
 		}
 	}
 	close(in_pipe[1]);

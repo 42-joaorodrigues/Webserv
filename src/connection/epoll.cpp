@@ -6,7 +6,7 @@
 /*   By: joao-alm <joao-alm@student.42luxembourg    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/06 14:53:35 by naiqing           #+#    #+#             */
-/*   Updated: 2025/09/29 17:26:09 by joao-alm         ###   ########.fr       */
+/*   Updated: 2025/10/01 15:58:05 by joao-alm         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -155,12 +155,20 @@ std::map<std::string, std::string> buildCGIEnvironment(const Request& req, const
         env["QUERY_STRING"] = "";
     }
     
+    // PATH_INFO - for ubuntu_cgi_tester, should be the full request URI
+    std::string requestUri = queryPos != std::string::npos ? req.uri.substr(0, queryPos) : req.uri;
+    env["PATH_INFO"] = requestUri;
+    
     // Content length and type for POST requests
     if (req.method == "POST") {
         std::ostringstream contentLength;
         contentLength << req.body.length();
         env["CONTENT_LENGTH"] = contentLength.str();
         env["CONTENT_TYPE"] = "application/x-www-form-urlencoded"; // Default, should be from headers
+        
+        // Debug: Print body size info
+        std::cout << "DEBUG: Request body size = " << req.body.length() << " bytes" << std::endl;
+        std::cout << "DEBUG: CONTENT_LENGTH = " << contentLength.str() << std::endl;
     }
     
     // HTTP headers (convert to CGI format)
@@ -538,6 +546,17 @@ void handleLocationRequest(const Request& req, const MatchedLocation& matched, i
     std::string requestedPath = req.uri;
     std::string effectiveRoot = matched.effective_root;
     
+    // Check client max body size for ALL requests (not just uploads)
+    const Server& server = socket.getServer(serverid);
+    ssize_t maxSize = server.getClientMaxBodySize();
+    if (maxSize > 0 && req.body.length() > static_cast<size_t>(maxSize)) {
+        std::cout << "DEBUG: Request body size " << req.body.length() << " exceeds limit " << maxSize << std::endl;
+        response.setStatus(413, "Payload Too Large");
+        std::string errorContent = geterrorpage(413, serverid, socket);
+        response.setBody(errorContent, "text/html");
+        return;
+    }
+    
     // Clean the URI path (remove query parameters)
     size_t queryPos = requestedPath.find('?');
     if (queryPos != std::string::npos) {
@@ -760,6 +779,9 @@ void handleLocationRequest(const Request& req, const MatchedLocation& matched, i
             // Execute CGI script
             std::string cgiOutput = cgiHandler.execute();
             
+            // Debug: Print CGI output size info
+            std::cout << "DEBUG: CGI output size = " << cgiOutput.length() << " bytes" << std::endl;
+            
             // Parse CGI output (headers + body)
             size_t headerEndPos = cgiOutput.find("\r\n\r\n");
             if (headerEndPos == std::string::npos) {
@@ -800,10 +822,12 @@ void handleLocationRequest(const Request& req, const MatchedLocation& matched, i
                     }
                 }
                 
+                std::cout << "DEBUG: CGI body size (after headers) = " << body.length() << " bytes" << std::endl;
                 response.setStatus(200, "OK");
                 response.setBody(body, contentType);
             } else {
                 // No headers, treat entire output as body
+                std::cout << "DEBUG: CGI body size (no headers) = " << cgiOutput.length() << " bytes" << std::endl;
                 response.setStatus(200, "OK");
                 response.setBody(cgiOutput, "text/html");
             }
@@ -847,19 +871,127 @@ void handleLocationRequest(const Request& req, const MatchedLocation& matched, i
     }
 }
 
+std::string readFullHttpRequest(int client_fd)
+{
+    std::string request;
+    char buffer[4096];
+    ssize_t bytes_read;
+    bool headers_complete = false;
+    size_t content_length = 0;
+    size_t headers_end_pos = 0;
+    int consecutive_eagain = 0;
+    const int max_eagain = 60000;  // 60 seconds timeout for large requests
+    
+    std::cout << "DEBUG: Starting to read HTTP request from fd " << client_fd << std::endl;
+
+    // First, read until we have complete headers
+    while (!headers_complete && consecutive_eagain < max_eagain)
+    {
+        bytes_read = recv(client_fd, buffer, sizeof(buffer), 0);
+        if (bytes_read > 0)
+        {
+            request.append(buffer, bytes_read);
+            consecutive_eagain = 0;
+            
+            // Check if we have complete headers (look for \r\n\r\n)
+            size_t header_end = request.find("\r\n\r\n");
+            if (header_end != std::string::npos)
+            {
+                headers_complete = true;
+                headers_end_pos = header_end + 4;
+                
+                // Extract Content-Length from headers
+                size_t content_length_pos = request.find("Content-Length: ");
+                if (content_length_pos != std::string::npos && content_length_pos < header_end)
+                {
+                    content_length_pos += 16;
+                    size_t line_end = request.find("\r\n", content_length_pos);
+                    if (line_end != std::string::npos)
+                    {
+                        std::string length_str = request.substr(content_length_pos, line_end - content_length_pos);
+                        content_length = static_cast<size_t>(std::atol(length_str.c_str()));
+                    }
+                }
+            }
+        }
+        else if (bytes_read == 0)
+        {
+            return "";
+        }
+        else
+        {
+            if (errno == EAGAIN || errno == EWOULDBLOCK)
+            {
+                consecutive_eagain++;
+                usleep(1000);  // Reduced sleep time for better responsiveness
+                continue;
+            }
+            else
+            {
+                return "";
+            }
+        }
+    }
+
+    // Now read the body if there's a Content-Length specified
+    if (content_length > 0)
+    {
+        size_t body_received = request.length() - headers_end_pos;
+        consecutive_eagain = 0;
+        
+        std::cout << "DEBUG: Reading body, expected " << content_length << " bytes" << std::endl;
+        
+        while (body_received < content_length && consecutive_eagain < max_eagain)
+        {
+            bytes_read = recv(client_fd, buffer, sizeof(buffer), 0);
+            if (bytes_read > 0)
+            {
+                request.append(buffer, bytes_read);
+                body_received += bytes_read;
+                consecutive_eagain = 0;
+            }
+            else if (bytes_read == 0)
+            {
+                break;
+            }
+            else
+            {
+                if (errno == EAGAIN || errno == EWOULDBLOCK)
+                {
+                    consecutive_eagain++;
+                    usleep(1000);  // Reduced sleep time for better responsiveness
+                    continue;
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
+        
+        if (content_length > 0) {
+            std::cout << "DEBUG: Body reading finished, received " << body_received << " of " << content_length << " bytes" << std::endl;
+            if (body_received < content_length) {
+                std::cout << "DEBUG: WARNING - Incomplete body read! Missing " << (content_length - body_received) << " bytes" << std::endl;
+            }
+        }
+    }
+
+    std::cout << "DEBUG: Finished reading HTTP request, total size: " << request.length() << " bytes" << std::endl;
+    return request;
+}
+
 int handleHttpRequest(int client_fd, Socket &socket)
 {
-    char buffer[9192];
     std::string rawRequest;
     Request Req;
-    ssize_t buffer_read;
 
-    buffer_read = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
+    std::cout << "DEBUG: handleHttpRequest called for fd " << client_fd << std::endl;
+    rawRequest = readFullHttpRequest(client_fd);
+    std::cout << "DEBUG: readFullHttpRequest returned " << rawRequest.length() << " bytes" << std::endl;
 
-    if (buffer_read > 0)
+    if (!rawRequest.empty())
     {
-        buffer[buffer_read] = '\0';
-        rawRequest = std::string(buffer);
         int serverid = socket.getConnection(client_fd);
         
         // 400 Bad Request - Request parsing failed
@@ -943,19 +1075,10 @@ int handleHttpRequest(int client_fd, Socket &socket)
         epoll_ctl(socket.getEpollfd(),EPOLL_CTL_DEL, client_fd, NULL);
         return OK;
     }
-    else if (buffer_read == 0)
-    {
-        // Client closed connection
-        return ERROR;
-    }
     else
     {
-        if (errno != EAGAIN && errno != EWOULDBLOCK)
-        {
-            perror("recv");
-            return ERROR;
-        }
-        return OK; // Would block, try again later
+        // Client closed connection or error reading request
+        return ERROR;
     }
 }
 
@@ -1087,6 +1210,7 @@ int waitEpoll(Socket &socket)
     
     for (int j = 0; j < nfds; j++)
     {
+        std::cout << "DEBUG: Epoll event for fd " << events[j].data.fd << " with events 0x" << std::hex << events[j].events << std::dec << std::endl;
         //check if the event is for a listening socket
         if (events[j].events & EPOLLERR || events[j].events & EPOLLHUP)
         {
@@ -1098,6 +1222,7 @@ int waitEpoll(Socket &socket)
         // Check if current fd is the socket fd -> means new connection coming
         else if ((i = socket.socketMatch(events[j].data.fd)) >= 0)
         {
+            std::cout << "DEBUG: New connection on listening socket " << events[j].data.fd << std::endl;
             if (initConnection(socket, i))
 				return ERROR; // Initialize the new connection
         }
@@ -1112,12 +1237,18 @@ int waitEpoll(Socket &socket)
         {
             if (events[j].events & EPOLLIN)
             {
+                std::cout << "DEBUG: EPOLLIN event for client fd " << events[j].data.fd << std::endl;
                 if (handleHttpRequest(events[j].data.fd, socket) < 0)
                 {
                     // Close connection on error
+                    std::cout << "DEBUG: handleHttpRequest failed for fd " << events[j].data.fd << std::endl;
                     close(events[j].data.fd);
                     epoll_ctl(socket.getEpollfd(), EPOLL_CTL_DEL, events[j].data.fd, NULL);
                 }
+            }
+            else
+            {
+                std::cout << "DEBUG: Non-EPOLLIN event for client fd " << events[j].data.fd << " (events: 0x" << std::hex << events[j].events << std::dec << ")" << std::endl;
             }
         }
 	}
