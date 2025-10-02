@@ -1,0 +1,35 @@
+You're absolutely right! In NGINX (and most web servers), certain directives have specific scopes and cannot be placed at the server level. Let me explain the typical directive scopes:
+
+## **Server-level only directives:**
+- `listen` - Defines what IP/port the server listens on
+- `server_name` - Defines server names for virtual hosting
+- `client_max_body_size` - Maximum request body size
+- `error_page` - Custom error pages
+- `root` - Default document root (can be overridden in locations)
+- `index` - Default index files (can be overridden in locations)
+
+## **Location-level only directives:**
+- `allow_methods` - HTTP methods allowed for specific routes
+- `cgi_pass` - CGI interpreter path for dynamic content
+- `cgi_extension` - File extensions that trigger CGI
+- `upload_store` - Directory for file uploads
+- `return` - Redirects and returns
+- `autoindex` - Directory listing (though can be server-level in some configs)
+
+## **Both server and location level:**
+- `root` - Document root (server default, location override)
+- `index` - Index files (server default, location override)
+
+## **Why this separation exists:**
+
+1. **Server-level directives** define the fundamental server behavior - what port to listen on, what domain names to respond to, global limits, etc.
+
+2. **Location-level directives** define route-specific behavior - different routes might need different HTTP methods, different CGI handlers, different upload locations, etc.
+
+3. **Security and Logic** - It wouldn't make sense to have `allow_methods POST` at server level because then ALL routes would only accept POST, including static files that should be GET-only.
+
+4. **Flexibility** - You want different routes to behave differently. `/api/users` might accept GET/POST/DELETE, while `/images/` should only accept GET.
+
+So in a proper NGINX-style configuration, you're correct that `allow_methods`, `cgi_pass`, `cgi_extension`, `upload_store`, and `return` should only appear in `location` blocks, not at the server level.
+
+The configuration I created follows this proper separation - server-level directives set defaults and global behavior, while location-level directives define specific route behaviors.

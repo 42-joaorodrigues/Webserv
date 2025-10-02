@@ -92,7 +92,12 @@
 		"text_encoding": "cpp",
 		"typeindex": "cpp",
 		"valarray": "cpp",
-		"variant": "cpp"
+		"variant": "cpp",
+		"strstream": "cpp",
+		"flat_map": "cpp",
+		"flat_set": "cpp",
+		"queue": "cpp",
+		"stack": "cpp"
 	},
 	"cSpell.words": [
 		"EPOLLERR",

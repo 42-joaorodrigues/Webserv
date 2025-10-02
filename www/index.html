@@ -165,7 +165,11 @@
                             <div class="test-item">
                                 <h4>POST Request</h4>
                                 <div class="test-controls">
+<<<<<<< HEAD
                                     <input type="text" id="postUrl" placeholder="/post_body" value="/post_body">
+=======
+                                    <input type="text" id="postUrl" placeholder="/" value="/">
+>>>>>>> main
                                     <textarea id="postData" placeholder="Request body data..."></textarea>
                                     <button onclick="testPost()" class="test-btn post-btn">Test POST</button>
                                 </div>
@@ -175,7 +179,11 @@
                             <div class="test-item">
                                 <h4>DELETE Request</h4>
                                 <div class="test-controls">
+<<<<<<< HEAD
                                     <input type="text" id="deleteUrl" placeholder="/file/to/delete" value="/uploads/test.txt">
+=======
+                                    <input type="text" id="deleteUrl" placeholder="/file/to/delete" value="/">
+>>>>>>> main
                                     <button onclick="testDelete()" class="test-btn delete-btn">Test DELETE</button>
                                 </div>
                                 <div class="test-result" id="deleteResult"></div>
@@ -530,24 +538,44 @@
         // Error Tests
         function test404() {
             makeRequest('GET', '/nonexistent/file/that/should/not/exist')
+<<<<<<< HEAD
                 .then(response => response.text().then(text => displayResult('error404Result', response, text)))
+=======
+                .then(response => {
+                    window.location.href = 'errors/404/404.html';
+                })
+>>>>>>> main
                 .catch(error => {
                     document.getElementById('error404Result').innerHTML = `<div class="result-error">404 Test Error: ${error.message}</div>`;
                 });
         }
 
         function test403() {
+<<<<<<< HEAD
             makeRequest('GET', '/forbidden/directory')
                 .then(response => response.text().then(text => displayResult('error403Result', response, text)))
+=======
+            makeRequest('GET', '/test/forbidden.txt')
+                .then(response => {
+                    window.location.href = 'errors/403/403.html';
+                })
+>>>>>>> main
                 .catch(error => {
                     document.getElementById('error403Result').innerHTML = `<div class="result-error">403 Test Error: ${error.message}</div>`;
                 });
         }
 
         function test413() {
+<<<<<<< HEAD
             const largeData = 'x'.repeat(10000); // Large payload to trigger 413
             makeRequest('POST', '/post_body', largeData)
                 .then(response => response.text().then(text => displayResult('error413Result', response, text)))
+=======
+            makeRequest('POST', '/upload', '/test/pila.txt')
+                .then(response => {
+                    window.location.href = 'errors/413/413.html';
+                })
+>>>>>>> main
                 .catch(error => {
                     document.getElementById('error413Result').innerHTML = `<div class="result-error">413 Test Error: ${error.message}</div>`;
                 });
