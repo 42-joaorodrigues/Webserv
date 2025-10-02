@@ -12,6 +12,7 @@
 #include "Logger.hpp"
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -110,6 +111,30 @@ void HttpHandler::handleLocationRequest(const Request& req, const MatchedLocatio
             response.setBody(errorContent, "text/html");
             return;
         }
+    }
+    
+    // Handle DELETE requests
+    if (req.method == "DELETE") {
+        // Calculate the file path to delete (same logic as regular file serving)
+        std::string deleteFilePath = effectiveRoot + requestedPath;
+        
+        // Check if file exists
+        if (access(deleteFilePath.c_str(), F_OK) == 0) {
+            // File exists, try to delete it
+            if (unlink(deleteFilePath.c_str()) == 0) {
+                response.setStatus(200, "OK");
+                response.setBody("File deleted successfully", "text/plain");
+            } else {
+                response.setStatus(500, "Internal Server Error");
+                std::string errorContent = HttpUtils::getErrorPage(500, serverid, socket);
+                response.setBody(errorContent, "text/html");
+            }
+        } else {
+            response.setStatus(404, "Not Found");
+            std::string errorContent = HttpUtils::getErrorPage(404, serverid, socket);
+            response.setBody(errorContent, "text/html");
+        }
+        return;
     }
     
     // Construct the full file path
