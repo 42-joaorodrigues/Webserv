@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebServ - Home</title>
-    <link rel="stylesheet" href="css/common.css">
+    <title>WebServ - About</title>
+    <link rel="stylesheet" href="../css/common.css">
 </head>
 <body>
     <div class="particles-background">
@@ -32,25 +32,64 @@
             <span class="music-text">Music</span>
         </button>
         <audio id="backgroundMusic" loop preload="auto">
-            <source src="music/background.mp3" type="audio/mpeg">
-            <source src="music/background.ogg" type="audio/ogg">
-            <!-- Fallback for browsers that don't support the audio element -->
+            <source src="../music/background.mp3" type="audio/mpeg">
+            <source src="../music/background.ogg" type="audio/ogg">
             Your browser does not support the audio element.
         </audio>
     </div>
 
     <div class="main-container">
         <nav class="navigation">
-            <a href="/" class="nav-button active-nav">Home</a>
+            <a href="/" class="nav-button">Home</a>
             <a href="/team/" class="nav-button">Team</a>
-            <a href="/about/" class="nav-button">About</a>
+            <a href="/about/" class="nav-button active-nav">About</a>
             <a href="/tests/" class="nav-button">Tests</a>
         </nav>
         
         <main class="content">
-            <section id="home" class="section active">
-                <h1 class="main-title">WebServ</h1>
-                <p class="subtitle">made with ❤️ by<br>Joao, Fabio and Naiqing</p>
+                        <section id="about" class="section active">
+                <h2>About WebServ</h2>
+                <div class="about-content">
+                    <div class="about-card">
+                        <div class="about-text">
+                            <h3>🚀 High-Performance HTTP Server</h3>
+                            <p>WebServ is a custom HTTP server implementation built from scratch using C++98. Our server demonstrates advanced programming concepts, network programming mastery, and deep understanding of web server architecture.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="features-grid">
+                        <div class="feature-card">
+                            <div class="feature-icon">⚡</div>
+                            <h4>Non-blocking I/O</h4>
+                            <p>Efficient event-driven architecture using epoll</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">🔧</div>
+                            <h4>NGINX-style Config</h4>
+                            <p>Familiar configuration syntax with virtual hosts</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">🌐</div>
+                            <h4>HTTP/1.1 Compliant</h4>
+                            <p>Full support for GET, POST, DELETE methods</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">📁</div>
+                            <h4>Static File Serving</h4>
+                            <p>Efficient file serving with directory listing</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">🔄</div>
+                            <h4>CGI Support</h4>
+                            <p>Execute PHP and Python scripts seamlessly</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">📤</div>
+                            <h4>File Uploads</h4>
+                            <p>Handle uploads with configurable size limits</p>
+                        </div>
+                    </div>
+                </div>
             </section>
         </main>
     </div>
@@ -82,10 +121,8 @@
             }
         });
 
-        // Set volume to a comfortable level
         backgroundMusic.volume = 0.3;
 
-        // Auto-pause when page loses focus (optional)
         document.addEventListener('visibilitychange', function() {
             if (document.hidden && isPlaying) {
                 backgroundMusic.pause();

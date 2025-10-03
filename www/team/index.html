@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebServ - Team</title>
+    <link rel="stylesheet" href="../css/common.css">
+</head>
+<body>
+    <div class="particles-background">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+
+    <!-- Background Music Player -->
+    <div class="music-player">
+        <button id="musicToggle" class="music-button">
+            <span class="music-icon">🎵</span>
+            <span class="music-text">Music</span>
+        </button>
+        <audio id="backgroundMusic" loop preload="auto">
+            <source src="../music/background.mp3" type="audio/mpeg">
+            <source src="../music/background.ogg" type="audio/ogg">
+            Your browser does not support the audio element.
+        </audio>
+    </div>
+
+    <div class="main-container">
+        <nav class="navigation">
+            <a href="/" class="nav-button">Home</a>
+            <a href="/team/" class="nav-button active-nav">Team</a>
+            <a href="/about/" class="nav-button">About</a>
+            <a href="/tests/" class="nav-button">Tests</a>
+        </nav>
+        
+        <main class="content">
+            <section id="team" class="section active">
+                <h2>Meet Our Team</h2>
+                <div class="team-grid">
+                    <a href="https://profile.intra.42.fr/users/joao-alm" target="_blank" class="team-link">
+                        <div class="team-card blue-card">
+                            <div class="card-background"></div>
+                            <div class="card-content">
+                                <div class="team-photo">
+                                    <img src="../images/joao-alm.jpg" alt="Joao" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <div class="photo-placeholder">👨‍💻</div>
+                                </div>
+                                <h3>Joao</h3>
+                                <p class="role">Backend & Configuration</p>
+                                <p class="description">42 student passionate about server architecture and system configuration. Focused on performance optimization and scalable solutions.</p>
+                            </div>
+                        </div>
+                    </a>
+
+                    <a href="https://profile.intra.42.fr/users/fsilva-p" target="_blank" class="team-link">
+                        <div class="team-card green-card">
+                            <div class="card-background"></div>
+                            <div class="card-content">
+                                <div class="team-photo">
+                                    <img src="../images/fsilva-p.jpg" alt="Fabio" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <div class="photo-placeholder">👨‍💼</div>
+                                </div>
+                                <h3>Fabio</h3>
+                                <p class="role">HTTP Protocol & Parsing</p>
+                                <p class="description">42 student dedicated to HTTP specifications and request parsing. Passionate about robust communication protocols and clean code architecture.</p>
+                            </div>
+                        </div>
+                    </a>
+
+                    <a href="https://profile.intra.42.fr/users/nacao" target="_blank" class="team-link">
+                        <div class="team-card purple-card">
+                            <div class="card-background"></div>
+                            <div class="card-content">
+                                <div class="team-photo">
+                                    <img src="../images/nacao.jpg" alt="Naiqing" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <div class="photo-placeholder">👩‍🔬</div>
+                                </div>
+                                <h3>Naiqing</h3>
+                                <p class="role">Network & Core Systems</p>
+                                <p class="description">42 student specializing in network programming and system-level development. Enthusiastic about epoll implementation and efficient I/O operations.</p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <script>
+        // Image loading for team photos
+        document.querySelectorAll('.team-photo img').forEach(img => {
+            img.addEventListener('load', function() {
+                this.style.display = 'block';
+                this.nextElementSibling.style.display = 'none';
+            });
+        });
+
+        // Background Music Controller
+        const musicToggle = document.getElementById('musicToggle');
+        const backgroundMusic = document.getElementById('backgroundMusic');
+        const musicIcon = document.querySelector('.music-icon');
+        const musicText = document.querySelector('.music-text');
+        let isPlaying = false;
+
+        musicToggle.addEventListener('click', function() {
+            if (isPlaying) {
+                backgroundMusic.pause();
+                musicIcon.textContent = '🎵';
+                musicText.textContent = 'Music';
+                musicToggle.classList.remove('playing');
+                isPlaying = false;
+            } else {
+                backgroundMusic.play().then(() => {
+                    musicIcon.textContent = '🎶';
+                    musicText.textContent = 'Playing';
+                    musicToggle.classList.add('playing');
+                    isPlaying = true;
+                }).catch(error => {
+                    console.log('Audio playback failed:', error);
+                });
+            }
+        });
+
+        backgroundMusic.volume = 0.3;
+
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden && isPlaying) {
+                backgroundMusic.pause();
+            } else if (!document.hidden && isPlaying) {
+                backgroundMusic.play();
+            }
+        });
+    </script>
+</body>
+</html>
