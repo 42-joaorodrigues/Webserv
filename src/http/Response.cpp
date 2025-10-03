@@ -1,4 +1,5 @@
 #include "Response.hpp"
+#include "../cookie/cookie.hpp"
 #include <ctime>
 #include <iomanip>
 
@@ -10,6 +11,28 @@ std::string getCurrentDate()
     std::tm *tm = std::gmtime(&t);
     std::strftime(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S GMT", tm);
     return std::string(buffer);
+}
+
+
+void Response::addCookie(const std::string &cookieLine)
+{
+    cookies.push_back(cookieLine);
+}
+
+void Response::setCookie(const std::string &name, const std::string &value, 
+                        const std::string &path, int maxAge, bool httpOnly, 
+                        bool secure, const std::string &sameSite)
+{
+    Cookie cookieHelper;
+    std::string cookieString = cookieHelper.CreateCookieRequest(name, value, path, maxAge, httpOnly, secure, sameSite);
+    addCookie(cookieString);
+}
+
+void Response::setSessionCookie(const std::string &name)
+{
+    Cookie cookieHelper;
+    std::string sessionId = cookieHelper.GenCookieId(32); // Generate 32-char session ID
+    setCookie(name, sessionId, "/", 3600, true, false, "Strict"); // 1 hour session
 }
 std::string Response::toString() const //create response
 {
@@ -23,7 +46,11 @@ std::string Response::toString() const //create response
 
     if (headers.find("Server") == headers.end())
         response << "Server: Webserver/1.0\r\n";
-        
+    
+    for (std::vector<std::string>::const_iterator it = cookies.begin(); it != cookies.end(); ++it)
+    {
+        response << "Set-Cookie: " << *it << "\r\n";
+    }
     //headers
     for (std::map<std::string, std::string>::const_iterator it = headers.begin(); it != headers.end(); ++it)
     {

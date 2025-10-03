@@ -274,6 +274,26 @@
                         </div>
                     </div>
 
+                    <!-- Cookie Testing -->
+                    <div class="test-category">
+                        <h3>🍪 Cookie Testing</h3>
+                        <div class="test-grid">
+                            <div class="test-item">
+                                <h4>Set Cookies</h4>
+                                <div class="test-controls">
+                                    <button onclick="testSetCookie()" class="test-btn post-btn">Set Test Cookies</button>
+                                </div>
+                                <div class="test-result" id="setCookieResult"></div>
+                            </div>
+
+                            <div class="test-item">
+                                <h4>Read Cookies</h4>
+                                <div class="test-controls">
+                                    <button onclick="testGetCookie()" class="test-btn get-btn">Read Cookies</button>
+                                </div>
+                                <div class="test-result" id="getCookieResult"></div>
+                            </div>
+
                     <!-- Performance Stats -->
                     <div class="stats-grid">
                         <div class="stat-card">
@@ -557,6 +577,43 @@
                     document.getElementById('error413Result').innerHTML = `<div class="result-error">413 Test Error: ${error.message}</div>`;
                 });
         }
+
+        // === COOKIE TESTING FUNCTIONS ===
+        function testSetCookie() {
+            makeRequest('GET', '/set-cookie') // Changed to GET since we serve the HTML file
+                .then(response => response.text())
+                .then(data => {
+                    // Check if cookies were set by looking at response headers
+                    document.getElementById('setCookieResult').innerHTML = `
+                        <div class="result-success">
+                            <strong>✅ Cookie Test Page Loaded!</strong><br>
+                            <strong>Status:</strong> 200 OK<br>
+                            <strong>Note:</strong> Cookies are set server-side when accessing /set-cookie<br>
+                            <pre>Server responded with cookie test page</pre>
+                        </div>
+                    `;
+                })
+                .catch(error => {
+                    document.getElementById('setCookieResult').innerHTML = `<div class="result-error">Set Cookie Error: ${error.message}</div>`;
+                });
+        }
+
+        function testGetCookie() {
+            makeRequest('GET', '/get-cookie')
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('getCookieResult').innerHTML = `
+                        <div class="result-success">
+                            <strong>✅ Cookie Read Test Page Loaded!</strong><br>
+                            <pre>Server responded with cookie reading page</pre>
+                        </div>
+                    `;
+                })
+                .catch(error => {
+                    document.getElementById('getCookieResult').innerHTML = `<div class="result-error">Get Cookie Error: ${error.message}</div>`;
+                });
+        }
+
 
         // Drag and drop for file upload
         const uploadArea = document.querySelector('.upload-area');

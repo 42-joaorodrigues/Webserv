@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get Cookie Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #c8e6a0 0%, #a8d080 50%, #b8d690 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        h1 { color: #2a3d2c; margin-bottom: 20px; }
+        .cookie-display {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid #dee2e6;
+            font-family: 'Courier New', monospace;
+        }
+        .no-cookies {
+            color: #6c757d;
+            font-style: italic;
+        }
+        .cookie-item {
+            margin: 10px 0;
+            padding: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+        }
+        .button {
+            background: #3b82f6;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-size: 16px;
+        }
+        .button:hover { background: #2563eb; }
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #2a3d2c;
+            text-decoration: none;
+        }
+        .back-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍪 Cookie Reading Test</h1>
+        
+        <p>This page demonstrates reading cookies that were previously set by your WebServ server.</p>
+        
+        <div class="cookie-display" id="cookieDisplay">
+            <div class="no-cookies">Loading cookies...</div>
+        </div>
+        
+        <button class="button" onclick="refreshCookies()">Refresh Cookies</button>
+        <button class="button" onclick="location.href='/set-cookie'">Set Test Cookies</button>
+        
+        <a href="/" class="back-link">← Back to WebServ Home</a>
+    </div>
+    
+    <script>
+        function displayCookies() {
+            const display = document.getElementById('cookieDisplay');
+            const cookies = document.cookie.split(';').filter(c => c.trim());
+            
+            if (cookies.length > 0) {
+                let html = '<h4>Found Cookies:</h4>';
+                cookies.forEach(cookie => {
+                    const [name, value] = cookie.trim().split('=');
+                    html += `
+                        <div class="cookie-item">
+                            <strong>${name}:</strong> ${value || '(empty)'}
+                        </div>
+                    `;
+                });
+                display.innerHTML = html;
+            } else {
+                display.innerHTML = `
+                    <div class="no-cookies">
+                        No cookies found. 
+                        <a href="/set-cookie">Set some test cookies first!</a>
+                    </div>
+                `;
+            }
+        }
+        
+        function refreshCookies() {
+            displayCookies();
+        }
+        
+        // Display cookies when page loads
+        displayCookies();
+    </script>
+</body>
+</html>

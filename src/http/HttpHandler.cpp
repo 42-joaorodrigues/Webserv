@@ -287,6 +287,13 @@ void HttpHandler::handleLocationRequest(const Request& req, const MatchedLocatio
     
     response.setStatus(200, "OK");
     response.setBody(content, HttpUtils::getContentType(filePath));
+    
+    // Special handling for cookie testing routes
+    if (requestedPath == "/set-cookie") {
+        // Use your Cookie class to set test cookies
+        response.setSessionCookie("test_sessions"); // Calls Cookie::GenCookieId(32)
+        response.setCookie("user", "joao", "/", 7200, true, false, "Strict"); // Calls Cookie::CreateCookieRequest()
+    }
 }
 
 std::string HttpHandler::readFullHttpRequest(int client_fd) {
