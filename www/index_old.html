@@ -50,11 +50,52 @@
         <main class="content">
             <section id="home" class="section active">
                 <h1 class="main-title">WebServ</h1>
-<<<<<<< HEAD
-                <p class="subtitle">made with ❤️ by<br>Joao,Fabio and Naiqing</p>
+                <p class="subtitle">made with ❤️ by<br>Joao, Fabio and Naiqing</p>
             </section>
+        </main>
+    </div>
+    
+    <script>
+        // Background Music Controller
+        const musicToggle = document.getElementById('musicToggle');
+        const backgroundMusic = document.getElementById('backgroundMusic');
+        const musicIcon = document.querySelector('.music-icon');
+        const musicText = document.querySelector('.music-text');
+        let isPlaying = false;
 
-            <section id="team" class="section">
+        musicToggle.addEventListener('click', function() {
+            if (isPlaying) {
+                backgroundMusic.pause();
+                musicIcon.textContent = '🎵';
+                musicText.textContent = 'Music';
+                musicToggle.classList.remove('playing');
+                isPlaying = false;
+            } else {
+                backgroundMusic.play().then(() => {
+                    musicIcon.textContent = '🎶';
+                    musicText.textContent = 'Playing';
+                    musicToggle.classList.add('playing');
+                    isPlaying = true;
+                }).catch(error => {
+                    console.log('Audio playback failed:', error);
+                });
+            }
+        });
+
+        // Set volume to a comfortable level
+        backgroundMusic.volume = 0.3;
+
+        // Auto-pause when page loses focus (optional)
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden && isPlaying) {
+                backgroundMusic.pause();
+            } else if (!document.hidden && isPlaying) {
+                backgroundMusic.play();
+            }
+        });
+    </script>
+</body>
+</html>
                 <h2>Meet Our Team</h2>
                 <div class="team-grid">
                     <div class="team-card blue-card">
@@ -291,14 +332,44 @@
                         </div>
                     </div>
                 </div>
-=======
-                <p class="subtitle">made with ❤️ by<br>Joao, Fabio and Naiqing</p>
->>>>>>> joao-alm
             </section>
         </main>
     </div>
     
     <script>
+        // Section navigation
+        document.querySelectorAll('.nav-button').forEach(button => {
+            button.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href').substring(1);
+                
+                // Hide all sections
+                document.querySelectorAll('.section').forEach(section => {
+                    section.classList.remove('active');
+                });
+                
+                // Show target section
+                const targetSection = document.getElementById(targetId);
+                if (targetSection) {
+                    targetSection.classList.add('active');
+                }
+                
+                // Update active nav button
+                document.querySelectorAll('.nav-button').forEach(btn => {
+                    btn.classList.remove('active-nav');
+                });
+                this.classList.add('active-nav');
+            });
+        });
+
+        // Image loading for team photos
+        document.querySelectorAll('.team-photo img').forEach(img => {
+            img.addEventListener('load', function() {
+                this.style.display = 'block';
+                this.nextElementSibling.style.display = 'none';
+            });
+        });
+
         // Background Music Controller
         const musicToggle = document.getElementById('musicToggle');
         const backgroundMusic = document.getElementById('backgroundMusic');
@@ -321,6 +392,7 @@
                     isPlaying = true;
                 }).catch(error => {
                     console.log('Audio playback failed:', error);
+                    // Fallback: show message or handle error
                 });
             }
         });
@@ -336,6 +408,236 @@
                 backgroundMusic.play();
             }
         });
+
+        // Testing functionality
+        let testStats = {
+            total: 0,
+            successful: 0,
+            responseTimes: []
+        };
+
+        function updateStats() {
+            document.getElementById('totalTests').textContent = testStats.total;
+            document.getElementById('successfulTests').textContent = testStats.successful;
+            const avgTime = testStats.responseTimes.length > 0 
+                ? Math.round(testStats.responseTimes.reduce((a, b) => a + b, 0) / testStats.responseTimes.length)
+                : 0;
+            document.getElementById('avgResponseTime').textContent = avgTime + 'ms';
+        }
+
+        function makeRequest(method, url, data = null) {
+            const startTime = Date.now();
+            testStats.total++;
+            
+            return fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': method === 'POST' ? 'application/x-www-form-urlencoded' : undefined
+                },
+                body: data
+            }).then(response => {
+                const endTime = Date.now();
+                const responseTime = endTime - startTime;
+                testStats.responseTimes.push(responseTime);
+                
+                if (response.ok || (response.status >= 200 && response.status < 400)) {
+                    testStats.successful++;
+                }
+                
+                updateStats();
+                return response;
+            });
+        }
+
+        function displayResult(elementId, response, responseText) {
+            const resultDiv = document.getElementById(elementId);
+            const statusClass = response.ok ? 'success' : 'error';
+            resultDiv.innerHTML = `
+                <div class="result-${statusClass}">
+                    <strong>Status:</strong> ${response.status} ${response.statusText}<br>
+                    <strong>Headers:</strong> ${JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)}<br>
+                    <strong>Response:</strong> <pre>${responseText.substring(0, 500)}${responseText.length > 500 ? '...' : ''}</pre>
+                </div>
+            `;
+        }
+
+        // HTTP Method Tests
+        function testGet() {
+            const url = document.getElementById('getUrl').value;
+            makeRequest('GET', url)
+                .then(response => response.text().then(text => displayResult('getResult', response, text)))
+                .catch(error => {
+                    document.getElementById('getResult').innerHTML = `<div class="result-error">Error: ${error.message}</div>`;
+                });
+        }
+
+        function testPost() {
+            const url = document.getElementById('postUrl').value;
+            const data = document.getElementById('postData').value;
+            makeRequest('POST', url, data)
+                .then(response => response.text().then(text => displayResult('postResult', response, text)))
+                .catch(error => {
+                    document.getElementById('postResult').innerHTML = `<div class="result-error">Error: ${error.message}</div>`;
+                });
+        }
+
+        function testDelete() {
+            const url = document.getElementById('deleteUrl').value;
+            makeRequest('DELETE', url)
+                .then(response => response.text().then(text => displayResult('deleteResult', response, text)))
+                .catch(error => {
+                    document.getElementById('deleteResult').innerHTML = `<div class="result-error">Error: ${error.message}</div>`;
+                });
+        }
+
+        // File Upload
+        let selectedFile = null;
+        
+        function handleFileSelect(event) {
+            selectedFile = event.target.files[0];
+            const uploadText = document.querySelector('.upload-text');
+            if (selectedFile) {
+                uploadText.textContent = `Selected: ${selectedFile.name}`;
+            }
+        }
+
+        function testUpload() {
+            if (!selectedFile) {
+                document.getElementById('uploadResult').innerHTML = '<div class="result-error">Please select a file first</div>';
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            const url = document.getElementById('uploadPath').value;
+            
+            const startTime = Date.now();
+            testStats.total++;
+            
+            fetch(url, {
+                method: 'POST',
+                body: formData
+            }).then(response => {
+                const endTime = Date.now();
+                testStats.responseTimes.push(endTime - startTime);
+                if (response.ok) testStats.successful++;
+                updateStats();
+                
+                return response.text().then(text => displayResult('uploadResult', response, text));
+            }).catch(error => {
+                document.getElementById('uploadResult').innerHTML = `<div class="result-error">Upload failed: ${error.message}</div>`;
+            });
+        }
+
+        // CGI Tests
+        function testPythonCgi() {
+            const url = document.getElementById('pythonCgiUrl').value;
+            const data = document.getElementById('pythonCgiData').value;
+            makeRequest('POST', url, data)
+                .then(response => response.text().then(text => displayResult('pythonCgiResult', response, text)))
+                .catch(error => {
+                    document.getElementById('pythonCgiResult').innerHTML = `<div class="result-error">CGI Error: ${error.message}</div>`;
+                });
+        }
+
+        function testBlaFile() {
+            const url = document.getElementById('blaUrl').value;
+            const data = document.getElementById('blaData').value;
+            makeRequest('POST', url, data)
+                .then(response => response.text().then(text => displayResult('blaResult', response, text)))
+                .catch(error => {
+                    document.getElementById('blaResult').innerHTML = `<div class="result-error">.bla Error: ${error.message}</div>`;
+                });
+        }
+
+        // Directory Tests
+        function testDirectory() {
+            const url = document.getElementById('dirUrl').value;
+            makeRequest('GET', url)
+                .then(response => response.text().then(text => displayResult('dirResult', response, text)))
+                .catch(error => {
+                    document.getElementById('dirResult').innerHTML = `<div class="result-error">Directory Error: ${error.message}</div>`;
+                });
+        }
+
+        function testAutoindex() {
+            const url = document.getElementById('autoindexUrl').value;
+            makeRequest('GET', url)
+                .then(response => response.text().then(text => displayResult('autoindexResult', response, text)))
+                .catch(error => {
+                    document.getElementById('autoindexResult').innerHTML = `<div class="result-error">Autoindex Error: ${error.message}</div>`;
+                });
+        }
+
+        // Error Tests
+        function test404() {
+            makeRequest('GET', '/nonexistent/file/that/should/not/exist')
+                .then(response => {
+                    window.location.href = 'errors/404/404.html';
+                })
+                .catch(error => {
+                    document.getElementById('error404Result').innerHTML = `<div class="result-error">404 Test Error: ${error.message}</div>`;
+                });
+        }
+
+        function test403() {
+            makeRequest('GET', '/test/forbidden.txt')
+                .then(response => {
+                    window.location.href = 'errors/403/403.html';
+                })
+                .catch(error => {
+                    document.getElementById('error403Result').innerHTML = `<div class="result-error">403 Test Error: ${error.message}</div>`;
+                });
+        }
+
+        function test413() {
+            makeRequest('POST', '/upload', '/test/pila.txt')
+                .then(response => {
+                    window.location.href = 'errors/413/413.html';
+                })
+                .catch(error => {
+                    document.getElementById('error413Result').innerHTML = `<div class="result-error">413 Test Error: ${error.message}</div>`;
+                });
+        }
+
+        // Drag and drop for file upload
+        const uploadArea = document.querySelector('.upload-area');
+        
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight(e) {
+            uploadArea.classList.add('drag-over');
+        }
+
+        function unhighlight(e) {
+            uploadArea.classList.remove('drag-over');
+        }
+
+        uploadArea.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) {
+                selectedFile = files[0];
+                document.querySelector('.upload-text').textContent = `Selected: ${selectedFile.name}`;
+            }
+        }
     </script>
 </body>
 </html>

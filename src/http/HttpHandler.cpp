@@ -8,6 +8,7 @@
 #include "CgiUtil.hpp"
 #include "DirectoryListing.hpp"
 #include "UploadService.hpp"
+#include <unistd.h>
 #include "HttpUtils.hpp"
 #include "Logger.hpp"
 #include <sys/socket.h>
@@ -24,9 +25,20 @@ void HttpHandler::handleLocationRequest(const Request& req, const MatchedLocatio
     // Check client max body size for ALL requests (not just uploads)
     const Server& server = socket.getServer(serverid);
     ssize_t maxSize = server.getClientMaxBodySize();
-    if (maxSize > 0 && req.body.length() > static_cast<size_t>(maxSize)) {
+    
+    // Get the actual content length from headers instead of req.body.length()
+    ssize_t actualBodySize = 0;
+    std::map<std::string, std::string>::const_iterator clIt = req.headers.find("Content-Length");
+    if (clIt == req.headers.end()) {
+        clIt = req.headers.find("content-length");
+    }
+    if (clIt != req.headers.end()) {
+        actualBodySize = std::strtol(clIt->second.c_str(), NULL, 10);
+    }
+    
+    if (maxSize > 0 && actualBodySize > maxSize) {
         std::ostringstream oss;
-        oss << "Request body size " << req.body.length() << " exceeds limit " << maxSize;
+        oss << "Request body size " << actualBodySize << " exceeds limit " << maxSize;
         Logger::warn(oss.str());
         response.setStatus(413, "Payload Too Large");
         std::string errorContent = HttpUtils::getErrorPage(413, serverid, socket);
@@ -318,14 +330,35 @@ std::string HttpHandler::readFullHttpRequest(int client_fd) {
     const int BUFFER_SIZE = 4096;
     char buffer[BUFFER_SIZE];
     std::string request;
+    int max_attempts = 1000; // Prevent infinite loops
+    int attempt = 0;
+    bool headers_complete = false;
+    size_t expected_content_length = 0;
+    size_t header_end_pos = 0;
     
-    while (true) {
+    while (attempt < max_attempts) {
         ssize_t bytes_received = recv(client_fd, buffer, BUFFER_SIZE - 1, 0);
         
         if (bytes_received < 0) {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
                 // No more data available right now
-                break;
+                if (headers_complete) {
+                    // Check if we have all the body data we need
+                    size_t current_body_length = request.length() - header_end_pos;
+                    if (current_body_length >= expected_content_length) {
+                        // We have the complete request
+                        break;
+                    }
+                    // Wait a bit and try again for more body data
+                    usleep(1000); // Sleep for 1ms
+                    attempt++;
+                    continue;
+                } else {
+                    // No headers yet, wait and retry
+                    usleep(1000); // Sleep for 1ms  
+                    attempt++;
+                    continue;
+                }
             } else {
                 perror("recv");
                 return "";
@@ -334,13 +367,16 @@ std::string HttpHandler::readFullHttpRequest(int client_fd) {
             // Connection closed by client
             break;
         } else {
+            // Reset attempt counter when we receive data
+            attempt = 0;
+            
             // Use append with exact byte count for binary data
             request.append(buffer, bytes_received);
             
-            // Check if we have received a complete HTTP request
-            if (request.find("\r\n\r\n") != std::string::npos) {
-                // We have the headers, now check if we need to read more for the body
-                size_t header_end = request.find("\r\n\r\n") + 4;
+            // Check if we have received complete headers
+            if (!headers_complete && request.find("\r\n\r\n") != std::string::npos) {
+                headers_complete = true;
+                header_end_pos = request.find("\r\n\r\n") + 4;
                 
                 // Look for Content-Length header
                 size_t content_length_pos = request.find("Content-Length:");
@@ -367,26 +403,22 @@ std::string HttpHandler::readFullHttpRequest(int client_fd) {
                     
                     if (value_end > value_start) {
                         std::string content_length_str = request.substr(value_start, value_end - value_start);
-                        size_t content_length = std::atoi(content_length_str.c_str());
-                        
-                        // Check if we have received the complete body
-                        size_t current_body_length = request.length() - header_end;
-                        if (current_body_length >= content_length) {
-                            // We have the complete request
-                            break;
-                        }
-                        // Continue reading for more data
-                    } else {
-                        // Invalid Content-Length header, assume request is complete
-                        break;
+                        expected_content_length = std::atoi(content_length_str.c_str());
                     }
                 } else {
-                    // No Content-Length header, assume request is complete after headers
+                    // No Content-Length header, request is complete after headers
                     break;
                 }
             }
             
-            // Continue reading if we haven't found the end of headers yet
+            // If headers are complete, check if we have all the body
+            if (headers_complete && expected_content_length > 0) {
+                size_t current_body_length = request.length() - header_end_pos;
+                if (current_body_length >= expected_content_length) {
+                    // We have the complete request
+                    break;
+                }
+            }
         }
     }
     

@@ -359,6 +359,18 @@ body {
     animation-duration: 2s;
 }
 
+.team-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: all 0.3s ease;
+}
+
+.team-link:hover {
+    text-decoration: none;
+    color: inherit;
+}
+
 .team-card:hover .card-background::before {
     animation-duration: 1.5s;
 }
