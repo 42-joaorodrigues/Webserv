@@ -313,6 +313,27 @@ function formatFileSize(bytes) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
+// === COOKIE TESTING FUNCTIONS ===
+async function testSetCookie() {
+    const resultElement = document.getElementById('setCookieResult');
+    
+    resultElement.innerHTML = 'Testing Set Cookie...';
+    resultElement.className = 'test-result loading';
+    
+    const result = await makeRequest('GET', '/set-cookie');
+    displayResult('setCookieResult', result);
+}
+
+async function testGetCookie() {
+    const resultElement = document.getElementById('getCookieResult');
+    
+    resultElement.innerHTML = 'Testing Get Cookie...';
+    resultElement.className = 'test-result loading';
+    
+    const result = await makeRequest('GET', '/get-cookie');
+    displayResult('getCookieResult', result);
+}
+
 // Drag and Drop Functionality
 document.addEventListener('DOMContentLoaded', function() {
     const uploadArea = document.querySelector('.upload-area');
