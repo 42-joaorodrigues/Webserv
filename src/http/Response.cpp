@@ -1,5 +1,4 @@
 #include "Response.hpp"
-#include "../cookie/cookie.hpp"
 #include <ctime>
 #include <iomanip>
 
@@ -55,7 +54,6 @@ void Response::setStatus(int code, const std::string &message)
     status_message = message;
 }
 
-
 void Response::setBody(const std::string &content, const std::string &contentType)
 {
     this->body = content;
@@ -65,32 +63,4 @@ void Response::setBody(const std::string &content, const std::string &contentTyp
 void Response::addCookie(const std::string &cookieStr)
 {
     cookies.push_back(cookieStr);
-}
-void Response::setCookie(const std::string &name, const std::string &value, 
-                       const std::string &path, int maxAge, 
-                       bool httpOnly, bool secure,
-                       const std::string &sameSite)
-{
-    std::ostringstream cookie;
-    
-    // Basic name=value pair
-    cookie << name << "=" << value;
-    
-    if (!path.empty())
-        cookie << "; Path=" << path;
-        
-    if (maxAge >= 0)
-        cookie << "; Max-Age=" << maxAge;
-        
-    if (httpOnly)
-        cookie << "; HttpOnly";
-        
-    if (secure)
-        cookie << "; Secure";
-        
-    if (!sameSite.empty())
-        cookie << "; SameSite=" << sameSite;
-    
-    // Add the cookie to our vector
-    cookies.push_back(cookie.str());
 }

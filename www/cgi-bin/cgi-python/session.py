@@ -49,7 +49,7 @@ save_sessions(sessions)
 
 # Output
 print("Content-Type: text/html")
-print(cookie.output())
+print(cookie.output()) 
 print()
 print(f"""<!DOCTYPE html>
 <html lang="en">
