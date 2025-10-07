@@ -15,7 +15,7 @@ public:
 	std::map<std::string, std::string> headers;
 	std::string body;
 	std::string http_version;
-	std::vector<std::string> cookies;
+	std::vector<std::string> cookies; // Store Set-Cookie headers separately
 
 	// --- Constructors ---
 	Response();
@@ -25,12 +25,13 @@ public:
 	std::string toString() const;// Build full HTTP response
 	void setStatus(int code, const std::string &message);
 	void setBody(const std::string &content, const std::string &contentType);
-	void addCookie(const std::string &cookieLine);
+	
+	// --- Cookie Functions ---
+	void addCookie(const std::string &cookieStr); // Add raw cookie string from CGI
 	void setCookie(const std::string &name, const std::string &value, 
-	               const std::string &path = "/", int maxAge = 3600, 
-	               bool httpOnly = true, bool secure = false, 
-	               const std::string &sameSite = "Strict");
-	void setSessionCookie(const std::string &name = "session");
+		const std::string &path = "/", int maxAge = -1, 
+		bool httpOnly = false, bool secure = false,
+		const std::string &sameSite = "");
 };
 
 #endif // RESPONSE_HPP

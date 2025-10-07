@@ -265,10 +265,36 @@ void HttpHandler::handleLocationRequest(const Request& req, const MatchedLocatio
                         line = line.substr(0, line.length() - 1);
                     }
                     
+                    // Handle Content-Type header
                     if (line.find("Content-Type:") == 0) {
                         contentType = line.substr(13);
                         while (!contentType.empty() && contentType[0] == ' ') {
                             contentType = contentType.substr(1);
+                        }
+                    }
+                    // Handle Set-Cookie headers
+                    else if (line.find("Set-Cookie:") == 0) {
+                        std::string cookieValue = line.substr(11); // Skip "Set-Cookie:"
+                        // Remove leading spaces if any
+                        while (!cookieValue.empty() && cookieValue[0] == ' ') {
+                            cookieValue = cookieValue.substr(1);
+                        }
+                        response.addCookie(cookieValue);
+                    }
+                    // Handle other headers
+                    else if (line.find(':') != std::string::npos) {
+                        size_t colonPos = line.find(':');
+                        std::string name = line.substr(0, colonPos);
+                        std::string value = line.substr(colonPos + 1);
+                        
+                        // Remove leading spaces if any
+                        while (!value.empty() && value[0] == ' ') {
+                            value = value.substr(1);
+                        }
+                        
+                        // Skip headers we handle specially (Content-Type already handled)
+                        if (name != "Content-Type") {
+                            response.headers[name] = value;
                         }
                     }
                 }
@@ -324,13 +350,6 @@ void HttpHandler::handleLocationRequest(const Request& req, const MatchedLocatio
     
     response.setStatus(200, "OK");
     response.setBody(content, HttpUtils::getContentType(filePath));
-    
-    // Special handling for cookie testing routes
-    if (requestedPath == "/set-cookie") {
-        // Use your Cookie class to set test cookies
-        response.setSessionCookie("test_sessions"); // Calls Cookie::GenCookieId(32)
-        response.setCookie("user", "joao", "/", 7200, true, false, "Strict"); // Calls Cookie::CreateCookieRequest()
-    }
 }
 
 std::string HttpHandler::readFullHttpRequest(int client_fd) {

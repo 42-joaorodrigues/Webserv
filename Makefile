@@ -34,8 +34,7 @@ SRC_SERVICES	= src/services/DirectoryListing.cpp \
 				  src/services/UploadService.cpp \
 				  src/services/HttpUtils.cpp \
 				  src/services/Logger.cpp
-SRC_COOKIE		= src/cookie/cookie.cpp
-SRC				= $(SRC_MAIN) $(SRC_CGI) $(SRC_CONFIG) $(SRC_HTTP) $(SRC_NETWORK) $(SRC_SERVICES) $(SRC_COOKIE)
+SRC				= $(SRC_MAIN) $(SRC_CGI) $(SRC_CONFIG) $(SRC_HTTP) $(SRC_NETWORK) $(SRC_SERVICES)
 OBJ				= $(SRC:src/%.cpp=$(O_DIR)/%.o)
 
 # Mandatory Rules

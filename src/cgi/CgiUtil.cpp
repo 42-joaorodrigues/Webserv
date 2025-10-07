@@ -52,7 +52,12 @@ std::map<std::string, std::string> CgiUtil::buildCGIEnvironment(const Request& r
         std::ostringstream contentLength;
         contentLength << req.body.length();
         env["CONTENT_LENGTH"] = contentLength.str();
-        env["CONTENT_TYPE"] = "application/x-www-form-urlencoded"; // Default, should be from headers
+        
+        // Content-Type will be set from headers in the loop below, but provide a default if not present
+        if (req.headers.find("content-type") == req.headers.end() && 
+            req.headers.find("Content-Type") == req.headers.end()) {
+            env["CONTENT_TYPE"] = "application/x-www-form-urlencoded";
+        }
         
         // CGI environment configured for request body
     }
@@ -60,16 +65,33 @@ std::map<std::string, std::string> CgiUtil::buildCGIEnvironment(const Request& r
     // HTTP headers (convert to CGI format)
     for (std::map<std::string, std::string>::const_iterator it = req.headers.begin(); 
          it != req.headers.end(); ++it) {
-        std::string headerName = "HTTP_" + it->first;
-        // Convert to uppercase and replace - with _
-        for (size_t i = 0; i < headerName.length(); i++) {
-            if (headerName[i] == '-') {
-                headerName[i] = '_';
-            } else {
-                headerName[i] = std::toupper(headerName[i]);
-            }
+        // Handle special headers like content-type and cookie
+        std::string lowerName = it->first;
+        for (size_t i = 0; i < lowerName.length(); i++) {
+            lowerName[i] = std::tolower(lowerName[i]);
         }
-        env[headerName] = it->second;
+        
+        // Cookie header requires special handling (direct HTTP_COOKIE environment variable)
+        if (lowerName == "cookie") {
+            env["HTTP_COOKIE"] = it->second;
+        } 
+        // Content-Type is set directly without HTTP_ prefix
+        else if (lowerName == "content-type" && req.method == "POST") {
+            env["CONTENT_TYPE"] = it->second;
+        }
+        // All other headers get HTTP_ prefix
+        else {
+            std::string headerName = "HTTP_" + it->first;
+            // Convert to uppercase and replace - with _
+            for (size_t i = 0; i < headerName.length(); i++) {
+                if (headerName[i] == '-') {
+                    headerName[i] = '_';
+                } else {
+                    headerName[i] = std::toupper(headerName[i]);
+                }
+            }
+            env[headerName] = it->second;
+        }
     }
     
     return env;

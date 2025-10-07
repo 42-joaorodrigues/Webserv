@@ -5,6 +5,12 @@ let testStats = {
     responseTimes: []
 };
 
+// Matrix login state
+let matrixUser = {
+    username: null,
+    isLoggedIn: false
+};
+
 // File for upload
 let selectedFile = null;
 
@@ -244,8 +250,46 @@ async function test403() {
     resultElement.innerHTML = 'Testing 403 error...';
     resultElement.className = 'test-result loading';
     
-    const result = await makeRequest('GET', '/files/forbidden.txt');
-    displayResult('error403Result', result);
+    try {
+        await makeRequest('GET', '/files/forbidden.txt');
+        resultElement.innerHTML = '<div class="result-error">Test failed: Expected 403 error but got success</div>';
+        resultElement.className = 'test-result failed';
+    } catch (error) {
+        if (error.status === 403) {
+            resultElement.innerHTML = '<div class="result-success">Test passed: Got 403 Forbidden as expected</div>';
+            resultElement.className = 'test-result success';
+        } else {
+            resultElement.innerHTML = `<div class="result-error">Test failed: Expected 403 error but got ${error.status || 'unknown error'}</div>`;
+            resultElement.className = 'test-result failed';
+        }
+    }
+}
+
+function confirmCookie() {
+    const warning = document.createElement('div');
+    warning.innerHTML = "⚠️ Are you *sure* you want to take the cookie? This might change... everything 🍪";
+    warning.style.color = 'red';
+    warning.style.fontWeight = 'bold';
+    warning.style.padding = '10px';
+    warning.style.background = '#2a0000';
+    warning.style.border = '2px solid red';
+    warning.style.borderRadius = '10px';
+    warning.style.textAlign = 'center';
+    warning.style.marginTop = '10px';
+    warning.style.animation = 'flash 0.5s infinite alternate';
+
+    const container = document.getElementById('CookieTest');
+    container.innerHTML = '';
+    container.appendChild(warning);
+
+    // small dramatic pause
+    setTimeout(() => {
+        if (confirm("😈 Are you *really* sure you want the cookie?")) {
+            window.location.href = 'http://127.0.0.1:8080/cgi-python/session.py';
+        } else {
+            container.innerHTML = "<span style='color:green;'>Wise choice... for now 🍀</span>";
+        }
+    }, 1500);
 }
 
 async function test413() {
@@ -496,3 +540,146 @@ function exportResults() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 }
+
+// === MATRIX LOGIN FUNCTIONS ===
+async function initMatrixLogin() {
+    const matrixOutput = document.getElementById('matrixOutput');
+    const matrixLoginBtn = document.getElementById('matrixLoginBtn');
+    const matrixUsername = document.getElementById('matrixUsername');
+    const matrixQuote = document.getElementById('matrixQuote');
+    const matrixLoginResult = document.getElementById('matrixLoginResult');
+    
+    // Check if user is already logged in (via cookie)
+    try {
+        const result = await makeRequest('GET', '/cgi-bin/matrix_login.py?format=json');
+        if (result.ok) {
+            const data = JSON.parse(result.body);
+            
+            if (data.username) {
+                // User is already logged in
+                matrixUser.username = data.username;
+                matrixUser.isLoggedIn = true;
+                
+                // Update UI
+                updateMatrixUI();
+                
+                // Show quote
+                if (data.quote) {
+                    matrixQuote.textContent = `"${data.quote}"`;
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error checking Matrix login status:', error);
+    }
+    
+    // Set up event listener for login button
+    matrixLoginBtn.addEventListener('click', handleMatrixLogin);
+    
+    // Allow pressing Enter to login
+    matrixUsername.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            handleMatrixLogin();
+        }
+    });
+}
+
+async function handleMatrixLogin() {
+    const matrixUsername = document.getElementById('matrixUsername');
+    const matrixLoginResult = document.getElementById('matrixLoginResult');
+    const matrixQuote = document.getElementById('matrixQuote');
+    
+    if (!matrixUsername.value.trim()) {
+        // Add typing effect to output
+        addMatrixOutput('> Error: Identity required');
+        return;
+    }
+    
+    // Show loading state
+    addMatrixOutput(`> Authenticating: ${matrixUsername.value}...`);
+    
+    try {
+        // Attempt login via CGI script
+        const result = await makeRequest('POST', '/cgi-bin/matrix_login.py?format=json', `username=${encodeURIComponent(matrixUsername.value)}`);
+        
+        if (result.ok) {
+            const data = JSON.parse(result.body);
+            
+            if (data.username) {
+                // Login successful
+                matrixUser.username = data.username;
+                matrixUser.isLoggedIn = true;
+                
+                // Update UI
+                addMatrixOutput(`> Access granted: Welcome ${data.username}`);
+                updateMatrixUI();
+                
+                // Show quote
+                if (data.quote) {
+                    matrixQuote.textContent = `"${data.quote}"`;
+                }
+            } else {
+                // Login failed
+                addMatrixOutput('> Error: Authentication failed');
+            }
+        } else {
+            // Request failed
+            addMatrixOutput('> Error: System malfunction');
+            matrixLoginResult.innerHTML = `<div class="error">Error: ${result.status} ${result.statusText}</div>`;
+        }
+    } catch (error) {
+        console.error('Matrix login error:', error);
+        addMatrixOutput('> Error: Connection failure');
+        matrixLoginResult.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+    }
+}
+
+function updateMatrixUI() {
+    const matrixContainer = document.getElementById('matrixLoginContainer');
+    const matrixOutput = document.getElementById('matrixOutput');
+    const inputContainer = document.querySelector('.matrix-input-container');
+    
+    if (matrixUser.isLoggedIn) {
+        // Clear output
+        matrixOutput.innerHTML = '';
+        
+        // Add greeting
+        const greeting = document.createElement('div');
+        greeting.className = 'matrix-greeting';
+        greeting.textContent = `Welcome back, ${matrixUser.username}. The Matrix has you...`;
+        matrixOutput.appendChild(greeting);
+        
+        // Replace input with logout option
+        if (inputContainer) {
+            inputContainer.innerHTML = `
+                <div class="matrix-logout">
+                    <button onclick="handleMatrixLogout()" class="matrix-logout-btn">Logout</button>
+                </div>
+            `;
+        }
+    }
+}
+
+function addMatrixOutput(text) {
+    const matrixOutput = document.getElementById('matrixOutput');
+    const line = document.createElement('p');
+    line.textContent = text;
+    matrixOutput.appendChild(line);
+}
+
+function handleMatrixLogout() {
+    // Clear cookie by setting it to expire
+    document.cookie = "matrix_username=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    
+    // Reset user state
+    matrixUser.username = null;
+    matrixUser.isLoggedIn = false;
+    
+    // Reload page to reset UI
+    window.location.reload();
+}
+
+// Initialize Matrix Login when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    initMatrixLogin();
+});

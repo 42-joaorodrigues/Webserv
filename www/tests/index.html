@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WebServ - Tests</title>
     <link rel="stylesheet" href="../css/common.css">
 </head>
+
 <body>
     <div class="particles-background">
         <div class="particle"></div>
@@ -45,13 +47,14 @@
             <a href="/about/" class="nav-button">About</a>
             <a href="/tests/" class="nav-button active-nav">Tests</a>
         </nav>
-        
+
         <main class="content">
             <section id="tests" class="section active">
                 <h2>WebServ Testing Dashboard</h2>
                 <div class="tests-content">
                     <div class="test-intro">
-                        <p>Test all WebServ features and HTTP methods. Perfect for validating your server implementation!</p>
+                        <p>Test all WebServ features and HTTP methods. Perfect for validating your server
+                            implementation!</p>
                     </div>
 
                     <!-- HTTP Methods Testing -->
@@ -80,7 +83,8 @@
                             <div class="test-item">
                                 <h4>DELETE Request</h4>
                                 <div class="test-controls">
-                                    <input type="text" id="deleteUrl" placeholder="/files/delete-me.txt" value="/files/delete-me.txt">
+                                    <input type="text" id="deleteUrl" placeholder="/files/delete-me.txt"
+                                        value="/files/delete-me.txt">
                                     <button onclick="testDelete()" class="test-btn delete-btn">Test DELETE</button>
                                 </div>
                                 <div class="test-result" id="deleteResult"></div>
@@ -95,7 +99,8 @@
                             <div class="upload-area" onclick="document.getElementById('fileInput').click()">
                                 <span class="upload-icon">📁</span>
                                 <span class="upload-text">Click to select file or drag and drop</span>
-                                <input type="file" id="fileInput" style="display: none;" onchange="handleFileSelect(event)">
+                                <input type="file" id="fileInput" style="display: none;"
+                                    onchange="handleFileSelect(event)">
                             </div>
                             <div class="upload-controls">
                                 <input type="text" id="uploadPath" placeholder="Upload path" value="/files">
@@ -112,7 +117,8 @@
                             <div class="test-item">
                                 <h4>Python CGI</h4>
                                 <div class="test-controls">
-                                    <input type="text" id="pythonCgiUrl" placeholder="/cgi-python/script.py" value="/cgi-python/test.py">
+                                    <input type="text" id="pythonCgiUrl" placeholder="/cgi-python/script.py"
+                                        value="/cgi-python/test.py">
                                     <textarea id="pythonCgiData" placeholder="CGI input data..."></textarea>
                                     <button onclick="testPythonCgi()" class="test-btn cgi-btn">Test Python</button>
                                 </div>
@@ -122,7 +128,8 @@
                             <div class="test-item">
                                 <h4>Bash CGI</h4>
                                 <div class="test-controls">
-                                    <input type="text" id="bashCgiUrl" placeholder="/cgi-bash/script.sh" value="/cgi-bash/test.sh">
+                                    <input type="text" id="bashCgiUrl" placeholder="/cgi-bash/script.sh"
+                                        value="/cgi-bash/test.sh">
                                     <textarea id="bashCgiData" placeholder="CGI input data..."></textarea>
                                     <button onclick="testBashCgi()" class="test-btn cgi-btn">Test Bash</button>
                                 </div>
@@ -178,49 +185,39 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- Cookie Testing -->
+                    <!-- Cookies Testing -->
                     <div class="test-category">
                         <h3>🍪 Cookie Testing</h3>
                         <div class="test-grid">
                             <div class="test-item">
-                                <h4>Set Cookies</h4>
-                                <div class="test-controls">
-                                    <button onclick="testSetCookie()" class="test-btn post-btn">Set Test Cookies</button>
-                                </div>
-                                <div class="test-result" id="setCookieResult"></div>
+                                <h4>Press The Button Below if you dare to take a cookie</h4>
+                                <button onclick="confirmCookie()" class="test-btn error-btn">Take The Cookie
+                                    Anyways</button>
+                                <div class="test-result" id="CookieTest"></div>
                             </div>
-
-                            <div class="test-item">
-                                <h4>Read Cookies</h4>
-                                <div class="test-controls">
-                                    <button onclick="testGetCookie()" class="test-btn get-btn">Read Cookies</button>
-                                </div>
-                                <div class="test-result" id="getCookieResult"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Performance Stats -->
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-number" id="totalTests">0</div>
-                            <div class="stat-label">Tests Run</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number" id="successfulTests">0</div>
-                            <div class="stat-label">Successful</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number" id="avgResponseTime">0ms</div>
-                            <div class="stat-label">Avg Response Time</div>
                         </div>
                     </div>
                 </div>
-            </section>
-        </main>
+                <!-- Performance Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalTests">0</div>
+                        <div class="stat-label">Tests Run</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="successfulTests">0</div>
+                        <div class="stat-label">Successful</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="avgResponseTime">0ms</div>
+                        <div class="stat-label">Avg Response Time</div>
+                    </div>
+                </div>
     </div>
-    
+    </section>
+    </main>
+    </div>
+
     <script src="js/tests.js"></script>
     <script>
         // Background Music Controller
@@ -230,7 +227,7 @@
         const musicText = document.querySelector('.music-text');
         let isPlaying = false;
 
-        musicToggle.addEventListener('click', function() {
+        musicToggle.addEventListener('click', function () {
             if (isPlaying) {
                 backgroundMusic.pause();
                 musicIcon.textContent = '🎵';
@@ -251,7 +248,7 @@
 
         backgroundMusic.volume = 0.3;
 
-        document.addEventListener('visibilitychange', function() {
+        document.addEventListener('visibilitychange', function () {
             if (document.hidden && isPlaying) {
                 backgroundMusic.pause();
             } else if (!document.hidden && isPlaying) {
@@ -260,4 +257,5 @@
         });
     </script>
 </body>
+
 </html>
