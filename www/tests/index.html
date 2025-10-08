@@ -185,37 +185,52 @@
                             </div>
                         </div>
                     </div>
-                    <!-- Cookies Testing -->
+                    <!-- Cookies & Session Testing -->
                     <div class="test-category">
-                        <h3>🍪 Cookie Testing</h3>
-                        <div class="test-grid">
-                            <div class="test-item">
-                                <h4>Press The Button Below if you dare to take a cookie</h4>
+                        <h3>🍪 Cookies & Session Testing</h3>
+                        <div class="test-grid" style="display: flex; gap: 2rem; flex-wrap: wrap;">
+
+                            <!-- Cookie Testing -->
+                            <div class="test-item" style="flex: 1;">
+                                <h4>Cookie Testing</h4>
+                                <h4>Press the button below if you dare to take a cookie 🍪</h4>
                                 <button onclick="confirmCookie()" class="test-btn error-btn">Take The Cookie
                                     Anyways</button>
                                 <div class="test-result" id="CookieTest"></div>
                             </div>
+
+                            <!-- Session Testing -->
+                            <div class="test-item" style="flex: 1;">
+                                <h4>Session Testing</h4>
+                                <h4>Opens a Python CGI script that manages sessions 🧠</h4>
+                                <button onclick="window.open('http://127.0.0.1:8080/cgi-python/session.py', '_blank')"
+                                    class="test-btn cgi-btn">
+                                    Open Session Page
+                                </button>
+                                <div class="test-result" id="SessionTest"></div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Performance Stats -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalTests">0</div>
+                            <div class="stat-label">Tests Run</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="successfulTests">0</div>
+                            <div class="stat-label">Successful</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="avgResponseTime">0ms</div>
+                            <div class="stat-label">Avg Response Time</div>
                         </div>
                     </div>
                 </div>
-                <!-- Performance Stats -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-number" id="totalTests">0</div>
-                        <div class="stat-label">Tests Run</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="successfulTests">0</div>
-                        <div class="stat-label">Successful</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="avgResponseTime">0ms</div>
-                        <div class="stat-label">Avg Response Time</div>
-                    </div>
-                </div>
-    </div>
-    </section>
-    </main>
+            </section>
+        </main>
     </div>
 
     <script src="js/tests.js"></script>
