@@ -6,7 +6,7 @@
 /*   By: joao-alm <joao-alm@student.42luxembourg    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/06 14:53:35 by naiqing           #+#    #+#             */
-/*   Updated: 2025/10/01 19:09:40 by joao-alm         ###   ########.fr       */
+/*   Updated: 2025/10/09 18:00:21 by joao-alm         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -140,7 +140,8 @@ int waitEpoll(Socket &socket)
         return ERROR;
     }
     
-    for (int j = 0; j < nfds; j++)
+
+	for (int j = 0; j < nfds; j++)
     {
         // Process epoll event
         //check if the event is for a listening socket

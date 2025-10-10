@@ -7,7 +7,7 @@
 # Compiler Settings
 NAME			= webserv
 CC				= c++
-CFLAGS			= -Wall -Werror -Wextra -std=c++98 -g3
+CFLAGS			= -Wall -Werror -Wextra -std=c++98
 RM				= rm -rf
 O_DIR			= obj
 
@@ -61,6 +61,9 @@ fclean:
 
 re: fclean all
 
+debug: CFLAGS += -DWEBSERV_DEBUG -O0
+debug: $(header) $(NAME)
+
 # Custom Rules
 .print_start:
 	@printf "$(print_color)%-$(col1pad).$(col1pad)s$(r) %-$(col2pad).$(col2pad)s %s$(c)\r" "$(print_action)" "$(print_name)" "$(print_file)"
@@ -97,4 +100,4 @@ b	= \033[1m
 r	= \033[0m
 
 # Phony
-.PHONY: all clean fclean re
+.PHONY: all clean fclean re debug

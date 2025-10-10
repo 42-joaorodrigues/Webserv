@@ -175,10 +175,10 @@ size_t UploadService::parseFileSize(const std::string& sizeStr) {
 }
 
 bool UploadService::isUploadAllowed(const LocationData* location, const Request& req, const Server& server) {
-    if (!location || location->upload_store.empty()) {
+	if (!location || location->upload_store.empty()) {
         return false;
     }
-    
+
     if (req.method != "POST") {
         return false;
     }

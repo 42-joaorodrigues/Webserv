@@ -22,13 +22,11 @@ int main(int argc, char *argv[])
 	Logger::serverStart("Initializing Servers...");	
 
 	try {
-		std::string config_file;
-		if (argc < 2) {
-			config_file = "config/NGINX.conf";
-		} else if (argc == 2) {
+		std::string config_file = "config/webserv.conf";
+		if (argc == 2) {
 			config_file = argv[1];
-		} else {
-			std::cerr << "Usage: ./" << argv[0] << " <config_file>(optional)" << std::endl;
+		} else if (argc > 2) {
+			std::cerr << "Usage: " << argv[0] << " <config_file>(optional)" << std::endl;
 			return 2;
 		}
 

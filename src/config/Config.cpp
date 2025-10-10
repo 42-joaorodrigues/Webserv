@@ -6,7 +6,7 @@
 /*   By: joao-alm <joao-alm@student.42luxembourg    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/07 14:06:07 by nacao             #+#    #+#             */
-/*   Updated: 2025/09/28 16:05:32 by joao-alm         ###   ########.fr       */
+/*   Updated: 2025/10/09 19:20:29 by joao-alm         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -231,6 +231,7 @@ void Config::parseLocation(Server& server) {
 
 		if (key == "allow_methods") parseLocMethods(loc_data);
 		else if (key == "root") parseLocRoot(loc_data);
+		else if (key == "alias") parseLocAlias(loc_data);
 		else if (key == "index") parseLocIndex(loc_data);
 		else if (key == "autoindex") parseLocAutoIndex(loc_data);
 		else if (key == "upload_store") parseLocUpload(loc_data);
@@ -257,6 +258,12 @@ void Config::parseLocMethods(LocationData& loc_data) {
 
 void Config::parseLocRoot(LocationData& loc_data) {
 	loc_data.root = peek()._value;
+	advance();
+	expect(";");
+}
+
+void Config::parseLocAlias(LocationData& loc_data) {
+	loc_data.alias = peek()._value;
 	advance();
 	expect(";");
 }

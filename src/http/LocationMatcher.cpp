@@ -36,12 +36,14 @@ MatchedLocation LocationMatcher::findMatchingLocation(const std::string& uri, co
         result.matched_path = bestPath;
         result.effective_root = resolveEffectiveRoot(bestLocation, server);
         result.effective_indexes = resolveEffectiveIndexes(bestLocation, server);
+        result.is_alias = !bestLocation->alias.empty();
     } else {
         // No location matched, use server defaults
         result.location = NULL;
         result.matched_path = "/";
         result.effective_root = server.getRoot();
         result.effective_indexes = server.getIndexes();
+        result.is_alias = false;
     }
     
     return result;
@@ -93,8 +95,14 @@ bool LocationMatcher::matchesPrefix(const std::string& uri, const std::string& l
 
 // Resolve the effective root directory
 std::string LocationMatcher::resolveEffectiveRoot(const LocationData* location, const Server& server) {
-    if (location != NULL && !location->root.empty()) {
-        return location->root;
+    if (location != NULL) {
+        // Alias takes precedence over root
+        if (!location->alias.empty()) {
+            return location->alias;
+        }
+        if (!location->root.empty()) {
+            return location->root;
+        }
     }
     return server.getRoot();
 }
@@ -149,4 +157,30 @@ std::string LocationMatcher::cleanUri(const std::string& uri) {
     }
     
     return result;
+}
+
+// Helper to build correct filesystem path based on alias vs root
+std::string LocationMatcher::buildFilesystemPath(const std::string& requestedPath, const MatchedLocation& matched) {
+    if (matched.is_alias) {
+        // For alias: remove the matched location path from requestedPath and append the rest
+        std::string remainingPath = requestedPath;
+        
+        // If requestedPath starts with the matched_path, remove it
+        if (requestedPath.length() >= matched.matched_path.length() && 
+            requestedPath.substr(0, matched.matched_path.length()) == matched.matched_path) {
+            remainingPath = requestedPath.substr(matched.matched_path.length());
+        }
+        
+        // Ensure no double slashes
+        if (!remainingPath.empty() && remainingPath[0] == '/') {
+            return matched.effective_root + remainingPath;
+        } else if (!matched.effective_root.empty() && matched.effective_root[matched.effective_root.length() - 1] == '/') {
+            return matched.effective_root + remainingPath;
+        } else {
+            return matched.effective_root + "/" + remainingPath;
+        }
+    } else {
+        // For root: normal behavior - just append the full requested path
+        return matched.effective_root + requestedPath;
+    }
 }

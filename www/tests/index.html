@@ -73,7 +73,7 @@
                             <div class="test-item">
                                 <h4>POST Request</h4>
                                 <div class="test-controls">
-                                    <input type="text" id="postUrl" placeholder="/post" value="/post">
+                                    <input type="text" id="postUrl" placeholder="/post" value="/post/hello">
                                     <textarea id="postData" placeholder="Request body data..."></textarea>
                                     <button onclick="testPost()" class="test-btn post-btn">Test POST</button>
                                 </div>
@@ -83,8 +83,8 @@
                             <div class="test-item">
                                 <h4>DELETE Request</h4>
                                 <div class="test-controls">
-                                    <input type="text" id="deleteUrl" placeholder="/files/delete-me.txt"
-                                        value="/files/delete-me.txt">
+                                    <input type="text" id="deleteUrl" placeholder="/upload/<uploaded files>"
+                                        value="/upload/<uploaded files>">
                                     <button onclick="testDelete()" class="test-btn delete-btn">Test DELETE</button>
                                 </div>
                                 <div class="test-result" id="deleteResult"></div>
@@ -103,7 +103,7 @@
                                     onchange="handleFileSelect(event)">
                             </div>
                             <div class="upload-controls">
-                                <input type="text" id="uploadPath" placeholder="Upload path" value="/files">
+                                <input type="text" id="uploadPath" placeholder="Upload path" value="/upload">
                                 <button onclick="testUpload()" class="test-btn upload-btn">Upload File</button>
                             </div>
                             <div class="test-result" id="uploadResult"></div>
@@ -145,7 +145,7 @@
                             <div class="test-item">
                                 <h4>Directory Listing</h4>
                                 <div class="test-controls">
-                                    <input type="text" id="dirUrl" placeholder="/directory/" value="/files/">
+                                    <input type="text" id="dirUrl" placeholder="/directory/" value="/files/sub-directory/">
                                     <button onclick="testDirectory()" class="test-btn dir-btn">Test Directory</button>
                                 </div>
                                 <div class="test-result" id="dirResult"></div>

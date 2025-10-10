@@ -11,14 +11,18 @@ struct MatchedLocation {
     std::string matched_path;      // The location path that was matched
     std::string effective_root;    // Resolved root directory to use
     std::vector<std::string> effective_indexes; // Resolved index files to use
+    bool is_alias;                 // True if using alias, false if using root
     
-    MatchedLocation() : location(NULL) {}
+    MatchedLocation() : location(NULL), is_alias(false) {}
 };
 
 class LocationMatcher {
 public:
     // Main function to find matching location
     static MatchedLocation findMatchingLocation(const std::string& uri, const Server& server);
+    
+    // Helper to build correct filesystem path (handles alias vs root)
+    static std::string buildFilesystemPath(const std::string& requestedPath, const MatchedLocation& matched);
     
 private:
     // Helper functions for simple prefix matching

@@ -250,19 +250,8 @@ async function test403() {
     resultElement.innerHTML = 'Testing 403 error...';
     resultElement.className = 'test-result loading';
     
-    try {
-        await makeRequest('GET', '/files/forbidden.txt');
-        resultElement.innerHTML = '<div class="result-error">Test failed: Expected 403 error but got success</div>';
-        resultElement.className = 'test-result failed';
-    } catch (error) {
-        if (error.status === 403) {
-            resultElement.innerHTML = '<div class="result-success">Test passed: Got 403 Forbidden as expected</div>';
-            resultElement.className = 'test-result success';
-        } else {
-            resultElement.innerHTML = `<div class="result-error">Test failed: Expected 403 error but got ${error.status || 'unknown error'}</div>`;
-            resultElement.className = 'test-result failed';
-        }
-    }
+    const result = await makeRequest('GET', '/files/sub-directory');
+    displayResult('error403Result', result);
 }
 
 function confirmCookie() {

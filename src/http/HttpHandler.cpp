@@ -35,10 +35,12 @@ void HttpHandler::handleLocationRequest(const Request& req, const MatchedLocatio
     if (clIt != req.headers.end()) {
         actualBodySize = std::strtol(clIt->second.c_str(), NULL, 10);
     }
-    
+	std::cout << "req content-lenght: " << actualBodySize << std::endl;
+	std::cout << "req body.length: " << req.body.length() << std::endl;
+
     if (maxSize > 0 && actualBodySize > maxSize) {
         std::ostringstream oss;
-        oss << "Request body size " << actualBodySize << " exceeds limit " << maxSize;
+        oss << "Request body size " << req.body.length() << " exceeds limit " << maxSize;
         Logger::warn(oss.str());
         response.setStatus(413, "Payload Too Large");
         std::string errorContent = HttpUtils::getErrorPage(413, serverid, socket);
@@ -128,7 +130,7 @@ void HttpHandler::handleLocationRequest(const Request& req, const MatchedLocatio
     // Handle DELETE requests
     if (req.method == "DELETE") {
         // Calculate the file path to delete (same logic as regular file serving)
-        std::string deleteFilePath = effectiveRoot + requestedPath;
+        std::string deleteFilePath = LocationMatcher::buildFilesystemPath(requestedPath, matched);
         
         // Check if file exists
         if (access(deleteFilePath.c_str(), F_OK) == 0) {
@@ -159,7 +161,7 @@ void HttpHandler::handleLocationRequest(const Request& req, const MatchedLocatio
     
     if (isDirectoryRequest) {
         // Handle directory requests
-        std::string directoryPath = effectiveRoot + requestedPath;
+        std::string directoryPath = LocationMatcher::buildFilesystemPath(requestedPath, matched);
         
         // Remove trailing slash for file system operations (except root)
         if (directoryPath.length() > 1 && directoryPath[directoryPath.length() - 1] == '/') {
@@ -189,10 +191,10 @@ void HttpHandler::handleLocationRequest(const Request& req, const MatchedLocatio
                     response.setBody(content, HttpUtils::getContentType(indexPath));
                     return;
                 } else {
-                    response.setStatus(403, "Forbidden");
-                    std::string errorContent = HttpUtils::getErrorPage(403, serverid, socket);
-                    response.setBody(errorContent, "text/html");
-                    return;
+                    response.setStatus(404, "Not Found");
+					std::string errorContent = HttpUtils::getErrorPage(404, serverid, socket);
+					response.setBody(errorContent, "text/html");
+					return;
                 }
             }
         }
@@ -206,25 +208,40 @@ void HttpHandler::handleLocationRequest(const Request& req, const MatchedLocatio
                 response.setBody(directoryListing, "text/html");
                 return;
             } else {
-                response.setStatus(403, "Forbidden");
-                std::string errorContent = HttpUtils::getErrorPage(403, serverid, socket);
-                response.setBody(errorContent, "text/html");
-                return;
+                response.setStatus(404, "Not Found");
+				std::string errorContent = HttpUtils::getErrorPage(404, serverid, socket);
+				response.setBody(errorContent, "text/html");
+				return;
             }
         } else {
             // Directory listing disabled
-            response.setStatus(403, "Forbidden");
-            std::string errorContent = HttpUtils::getErrorPage(403, serverid, socket);
-            response.setBody(errorContent, "text/html");
-            return;
+            response.setStatus(404, "Not Found");
+			std::string errorContent = HttpUtils::getErrorPage(404, serverid, socket);
+			response.setBody(errorContent, "text/html");
+			return;
         }
     } else {
+		std::string potentialDirPath = LocationMatcher::buildFilesystemPath(requestedPath, matched);
+		struct stat potentialDirStat;
+		
+		if (stat(potentialDirPath.c_str(), &potentialDirStat) == 0 && S_ISDIR(potentialDirStat.st_mode)) {
+			// This is a directory but requested without trailing slash
+			// Send 301 redirect to add the trailing slash
+			std::string redirectLocation = requestedPath + "/";
+			
+			response.setStatus(301, "Moved Permanently");
+			response.headers["Location"] = redirectLocation;
+			response.setBody("", "text/html");
+			return;
+		}
+    
         // Handle file requests
-        filePath = effectiveRoot + requestedPath;
+        filePath = LocationMatcher::buildFilesystemPath(requestedPath, matched);
     }
     
     // Check if this is a CGI request
     if (CgiUtil::isCGIRequest(filePath, matched.location)) {
+		puts("inside cgi");
         if (matched.location->cgi_pass.empty()) {
             // CGI extension found but no CGI interpreter configured
             response.setStatus(500, "Internal Server Error");
@@ -234,9 +251,10 @@ void HttpHandler::handleLocationRequest(const Request& req, const MatchedLocatio
         }
         
         try {
+			puts("before cgi env build");
             // Build CGI environment
             std::map<std::string, std::string> cgiEnv = CgiUtil::buildCGIEnvironment(req, filePath, matched);
-            
+            puts("after cgi env build");
             // Create CGI handler
             CGIHandler cgiHandler(matched.location->cgi_pass, filePath, cgiEnv, req.body);
             
@@ -298,7 +316,7 @@ void HttpHandler::handleLocationRequest(const Request& req, const MatchedLocatio
                         }
                     }
                 }
-                
+                std::cout << "cgi sent body length: " << body.length() << "\n";
                 response.setStatus(200, "OK");
                 response.setBody(body, contentType);
                 return;
@@ -455,6 +473,8 @@ int HttpHandler::handleHttpRequest(int client_fd, Socket& socket) {
     // Starting HTTP request handling
     
     std::string rawRequest = readFullHttpRequest(client_fd);
+	std::cout << "---request start---" << std::endl << rawRequest
+			  << std::endl << "---request end---" << std::endl; 
     if (rawRequest.empty()) {
         // Empty request received
         return ERROR;

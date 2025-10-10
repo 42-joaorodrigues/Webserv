@@ -6,7 +6,7 @@
 /*   By: joao-alm <joao-alm@student.42luxembourg    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/07 14:06:04 by nacao             #+#    #+#             */
-/*   Updated: 2025/09/28 15:32:55 by joao-alm         ###   ########.fr       */
+/*   Updated: 2025/10/09 23:37:43 by joao-alm         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,6 +53,7 @@ private:
 
 	void parseLocMethods(LocationData& loc_data);
 	void parseLocRoot(LocationData& loc_data);
+	void parseLocAlias(LocationData& loc_data);
 	void parseLocIndex(LocationData& loc_data);
 	void parseLocAutoIndex(LocationData& loc_data);
 	void parseLocUpload(LocationData& loc_data);
@@ -60,6 +61,9 @@ private:
 	void parseLocCgiPass(LocationData& loc_data);
 	void parseLocCgiExt(LocationData& loc_data);
 	// ---
+
+	// location inheritance
+	
 };
 
 #endif

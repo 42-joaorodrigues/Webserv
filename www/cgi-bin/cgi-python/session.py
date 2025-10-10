@@ -4,7 +4,7 @@ import os
 import json
 import uuid
 from http import cookies
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 # Path to sessions/sessions.json (relative to this script)
 BASE_DIR = os.path.dirname(__file__)
@@ -37,7 +37,7 @@ else:
     cookie["session_id"] = sid
     cookie["session_id"]["path"] = "/"
     cookie["session_id"]["max-age"] = 604800  # 7 days
-    expires = (datetime.utcnow() + timedelta(days=7)).strftime("%a, %d %b %Y %H:%M:%S GMT")
+    expires = (datetime.now(timezone.utc) + timedelta(days=7)).strftime("%a, %d %b %Y %H:%M:%S GMT")
     cookie["session_id"]["expires"] = expires
 
 # Update session

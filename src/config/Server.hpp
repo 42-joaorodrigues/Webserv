@@ -10,6 +10,7 @@
 struct LocationData {
     std::vector<std::string> methods;          // Allowed HTTP methods (GET, POST, DELETE, etc.)
     std::string root;                          // Directory for this route (overrides server root if set)
+    std::string alias;                         // Alias path (alternative to root, maps location directly)
     std::vector<std::string> _indexes;                       // Default file (e.g., index.html)
     bool autoindex;                            // Directory listing enabled/disabled
     std::string upload_store;                // Upload directory (if enabled)

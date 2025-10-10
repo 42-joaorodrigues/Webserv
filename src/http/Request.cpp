@@ -134,8 +134,10 @@ bool Request::parse(const std::string &raw_request)
     std::string rest((std::istreambuf_iterator<char>(raw_request_stream)),
                     std::istreambuf_iterator<char>());
     body = rest;
-    if (headers.find("transfer-encoding") != headers.end()
-        && headers["transfer-encoding"] == "chunked")
+    if ((headers.find("transfer-encoding") != headers.end()
+        && headers["transfer-encoding"] == "chunked") ||
+		(headers.find("Transfer-Encoding") != headers.end()
+        && headers["Transfer-Encoding"] == "chunked"))
     {
         try {
             body = dechunk(body);
