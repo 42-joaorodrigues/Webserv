@@ -6,13 +6,16 @@
 /*   By: joao-alm <joao-alm@student.42luxembourg    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/06 14:53:35 by naiqing           #+#    #+#             */
-/*   Updated: 2025/10/09 18:00:21 by joao-alm         ###   ########.fr       */
+/*   Updated: 2025/10/10 19:42:00 by joao-alm         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "connection.hpp"
 #include "Socket.hpp"
 #include "HttpHandler.hpp"
+
+// Global connection counter for resource management
+int active_connections = 0;
 #include "Logger.hpp"
 #include <iostream>
 #include <limits>
@@ -50,6 +53,23 @@ int initConnection(Socket &socket, int i)
     socklen_t           in_len = sizeof(addr); // Length of the address structure
     int                 newFd;
 
+    // Simple connection limit to prevent resource exhaustion  
+    const int MAX_CONNECTIONS = 5000; // Lower limit for stability
+    
+    if (active_connections >= MAX_CONNECTIONS) {
+        std::cerr << "Connection limit reached (" << MAX_CONNECTIONS << "), refusing new connections" << std::endl;
+        return OK; // Don't treat as error, just skip this accept cycle
+    }
+    
+    // Rate limiting: don't accept too many connections per epoll cycle
+    static int accepts_this_cycle = 0;
+    const int MAX_ACCEPTS_PER_CYCLE = 50;
+    
+    if (accepts_this_cycle >= MAX_ACCEPTS_PER_CYCLE) {
+        accepts_this_cycle = 0; // Reset for next cycle
+        return OK; // Defer remaining accepts to next epoll cycle
+    }
+
     if ((newFd = accept(socket.getSocket(i), (struct sockaddr *)&addr, &in_len)) < 0) // Accept the new connection
     {
 		//EAGAIN and EWOULDBLOCKare not errors, they just mean no more connections to accept
@@ -75,10 +95,13 @@ int initConnection(Socket &socket, int i)
 	// This will allow the epoll instance to monitor the new connection for incoming data
 	initEpollEvent(&event, EPOLLIN, newFd);
 	socket.addConnection(newFd, i); // Add the new connection to the socket's connection map
+	active_connections++; // Track connection count
+	accepts_this_cycle++; // Track accepts this epoll cycle
 
 	// Log the new connection
 	std::ostringstream oss;
-	oss << "New Connection From " << inet_ntoa(addr.sin_addr) << ", Assigned Socket " << newFd;
+	oss << "New Connection From " << inet_ntoa(addr.sin_addr) << ", Assigned Socket " << newFd 
+		<< " (Active: " << active_connections << "/" << MAX_CONNECTIONS << ")";
 	Logger::connection(oss.str());
 
 	if (epoll_ctl(socket.getEpollfd(), EPOLL_CTL_ADD, newFd, &event) < 0) // Add the new connection to the epoll instance
@@ -150,7 +173,12 @@ int waitEpoll(Socket &socket)
             // Handle error or hang-up events
             Logger::timeout(events[j].data.fd);
             close(events[j].data.fd);
-            return OK;
+            epoll_ctl(socket.getEpollfd(), EPOLL_CTL_DEL, events[j].data.fd, NULL);
+            
+            // Decrement connection count
+            extern int active_connections;
+            if (active_connections > 0) active_connections--;
+            continue; // Don't return, continue processing other events
         }
         // Check if current fd is the socket fd -> means new connection coming
         else if ((i = socket.socketMatch(events[j].data.fd)) >= 0)
@@ -170,15 +198,8 @@ int waitEpoll(Socket &socket)
             if (events[j].events & EPOLLIN)
             {
                 // Handle incoming data on client socket
-                if (HttpHandler::handleHttpRequest(events[j].data.fd, socket) < 0)
-                {
-                    // Close connection on error
-                    std::ostringstream oss;
-                    oss << "HTTP request handling failed for socket " << events[j].data.fd;
-                    Logger::debug(oss.str());
-                    close(events[j].data.fd);
-                    epoll_ctl(socket.getEpollfd(), EPOLL_CTL_DEL, events[j].data.fd, NULL);
-                }
+                // HttpHandler will handle all cleanup (close + epoll_ctl)
+                HttpHandler::handleHttpRequest(events[j].data.fd, socket);
             }
             else
             {

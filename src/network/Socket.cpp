@@ -6,11 +6,12 @@
 /*   By: joao-alm <joao-alm@student.42luxembourg    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/07 11:08:49 by nacao             #+#    #+#             */
-/*   Updated: 2025/09/27 20:00:53 by joao-alm         ###   ########.fr       */
+/*   Updated: 2025/10/10 19:35:05 by joao-alm         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Socket.hpp"
+#include "connection.hpp" // For LISTEN_BACKLOG
 
 /* 
  * methods
@@ -61,9 +62,27 @@ int Socket::initsocket()
 		// This allows the socket to be bound to an address that is already in use
 		if (setsockopt(getSocket(i), SOL_SOCKET, SO_REUSEADDR, &num, sizeof(num)))
 		{
-			perror("setsockopt");
+			perror("setsockopt SO_REUSEADDR");
 			close(this->_socketfd);
 			return ERROR;
+		}
+		
+		// Add SO_REUSEPORT for better load distribution (Linux)
+		if (setsockopt(getSocket(i), SOL_SOCKET, SO_REUSEPORT, &num, sizeof(num)) < 0)
+		{
+			// Not fatal - SO_REUSEPORT might not be supported on all systems
+			perror("setsockopt SO_REUSEPORT (non-fatal)");
+		}
+		
+		// Set larger socket buffers for high throughput
+		int buffer_size = 1024 * 1024; // 1MB buffers
+		if (setsockopt(getSocket(i), SOL_SOCKET, SO_RCVBUF, &buffer_size, sizeof(buffer_size)) < 0)
+		{
+			perror("setsockopt SO_RCVBUF (non-fatal)");
+		}
+		if (setsockopt(getSocket(i), SOL_SOCKET, SO_SNDBUF, &buffer_size, sizeof(buffer_size)) < 0)
+		{
+			perror("setsockopt SO_SNDBUF (non-fatal)");
 		}
 		
 		// Set the address and port for the socket
@@ -81,7 +100,7 @@ int Socket::initsocket()
 			perror("setNonBlocking");
 			return ERROR;
 		}
-		if (listen(this->getSocket(i), MAX_EVENTS) < 0) // Listen for incoming connections on the socket
+		if (listen(this->getSocket(i), LISTEN_BACKLOG) < 0) // Listen for incoming connections on the socket
 		{
 			perror("listen");
 			return ERROR;

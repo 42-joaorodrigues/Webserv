@@ -17,8 +17,9 @@ struct LocationData {
     std::map<int, std::string> redirect;                      // Redirect target (e.g., "http://...")
     std::string cgi_pass;                 // Path to CGI executable (e.g., "/usr/bin/php-cgi")
 	std::string cgi_extension;                 // File extension that triggers CGI (e.g., ".php")
+    ssize_t client_max_body_size;             // Location-specific body size limit (-1 = inherit from server)
 
-    LocationData() : autoindex(false) {}
+    LocationData() : autoindex(false), client_max_body_size(-1) {}
 };
 
 // Represents a "server" block

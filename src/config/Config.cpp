@@ -6,7 +6,7 @@
 /*   By: joao-alm <joao-alm@student.42luxembourg    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/07 14:06:07 by nacao             #+#    #+#             */
-/*   Updated: 2025/10/09 19:20:29 by joao-alm         ###   ########.fr       */
+/*   Updated: 2025/10/10 17:32:45 by joao-alm         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -238,6 +238,7 @@ void Config::parseLocation(Server& server) {
 		else if (key == "return") parseLocRedirect(loc_data);
 		else if (key == "cgi_pass") parseLocCgiPass(loc_data);
 		else if (key == "cgi_extension") parseLocCgiExt(loc_data);
+		else if (key == "client_max_body_size") parseLocBodySize(loc_data);
 		else {
 			std::ostringstream oss;
 			oss << "Unknown directive '" << key << "' at line " << key_tkn._line;
@@ -323,6 +324,24 @@ void Config::parseLocCgiPass(LocationData& loc_data) {
 
 void Config::parseLocCgiExt(LocationData& loc_data) {
 	loc_data.cgi_extension = peek()._value;
+	advance();
+	expect(";");
+}
+
+void Config::parseLocBodySize(LocationData& loc_data) {
+	std::string size_str = peek()._value;
+	
+	// Convert size string to bytes (similar to server-level parsing)
+	ssize_t size = 0;
+	if (!size_str.empty() && (size_str[size_str.length() - 1] == 'M' || size_str[size_str.length() - 1] == 'm')) {
+		size = std::atoi(size_str.substr(0, size_str.length() - 1).c_str()) * 1024 * 1024;
+	} else if (!size_str.empty() && (size_str[size_str.length() - 1] == 'K' || size_str[size_str.length() - 1] == 'k')) {
+		size = std::atoi(size_str.substr(0, size_str.length() - 1).c_str()) * 1024;
+	} else {
+		size = std::atoi(size_str.c_str());
+	}
+	
+	loc_data.client_max_body_size = size;
 	advance();
 	expect(";");
 }

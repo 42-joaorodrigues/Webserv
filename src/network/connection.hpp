@@ -24,7 +24,8 @@ class Socket;
 
 #define OK 0
 #define ERROR -1
-#define MAX_EVENTS 10 // Maximum number of events to handle at once
+#define MAX_EVENTS 1000 // Maximum number of events to handle at once
+#define LISTEN_BACKLOG 1024 // Maximum pending connections in listen queue
 
 typedef std::vector<int> vector_int; // Vector of integers, used for file descriptors
 typedef std::vector<Server> vector_servers; // Vector of Server objects, used for managing multiple servers

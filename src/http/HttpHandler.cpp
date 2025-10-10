@@ -24,19 +24,25 @@ void HttpHandler::handleLocationRequest(const Request& req, const MatchedLocatio
     
     // Check client max body size for ALL requests (not just uploads)
     const Server& server = socket.getServer(serverid);
-    ssize_t maxSize = server.getClientMaxBodySize();
     
-    // Get the actual content length from headers instead of req.body.length()
-    ssize_t actualBodySize = 0;
+    // Use location-specific client_max_body_size if set, otherwise fall back to server-level
+    ssize_t maxSize = server.getClientMaxBodySize();
+    if (matched.location != NULL && matched.location->client_max_body_size != -1) {
+        maxSize = matched.location->client_max_body_size;
+    }
+    
+    // Use actual body size (works for both Content-Length and chunked encoding)
+    ssize_t actualBodySize = req.body.length();
+    
+    // Also check Content-Length header for early detection (before body is fully read)
     std::map<std::string, std::string>::const_iterator clIt = req.headers.find("Content-Length");
     if (clIt == req.headers.end()) {
         clIt = req.headers.find("content-length");
     }
     if (clIt != req.headers.end()) {
-        actualBodySize = std::strtol(clIt->second.c_str(), NULL, 10);
+        ssize_t headerBodySize = std::strtol(clIt->second.c_str(), NULL, 10);
+        actualBodySize = std::max(actualBodySize, headerBodySize);
     }
-	std::cout << "req content-lenght: " << actualBodySize << std::endl;
-	std::cout << "req body.length: " << req.body.length() << std::endl;
 
     if (maxSize > 0 && actualBodySize > maxSize) {
         std::ostringstream oss;
@@ -241,7 +247,6 @@ void HttpHandler::handleLocationRequest(const Request& req, const MatchedLocatio
     
     // Check if this is a CGI request
     if (CgiUtil::isCGIRequest(filePath, matched.location)) {
-		puts("inside cgi");
         if (matched.location->cgi_pass.empty()) {
             // CGI extension found but no CGI interpreter configured
             response.setStatus(500, "Internal Server Error");
@@ -251,16 +256,13 @@ void HttpHandler::handleLocationRequest(const Request& req, const MatchedLocatio
         }
         
         try {
-			puts("before cgi env build");
             // Build CGI environment
             std::map<std::string, std::string> cgiEnv = CgiUtil::buildCGIEnvironment(req, filePath, matched);
-            puts("after cgi env build");
             // Create CGI handler
             CGIHandler cgiHandler(matched.location->cgi_pass, filePath, cgiEnv, req.body);
             
             // Execute CGI script
             std::string cgiOutput = cgiHandler.execute();
-            
             // CGI execution completed
             
             // Parse CGI output (headers + body)
@@ -316,7 +318,6 @@ void HttpHandler::handleLocationRequest(const Request& req, const MatchedLocatio
                         }
                     }
                 }
-                std::cout << "cgi sent body length: " << body.length() << "\n";
                 response.setStatus(200, "OK");
                 response.setBody(body, contentType);
                 return;
@@ -387,11 +388,19 @@ std::string HttpHandler::readFullHttpRequest(int client_fd) {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
                 // No more data available right now
                 if (headers_complete) {
-                    // Check if we have all the body data we need
-                    size_t current_body_length = request.length() - header_end_pos;
-                    if (current_body_length >= expected_content_length) {
-                        // We have the complete request
-                        break;
+                    // For chunked encoding, don't check expected_content_length (it's 0)
+                    // The chunked parsing logic will determine when we're done
+                    bool is_chunked = (request.find("Transfer-Encoding:") != std::string::npos || 
+                                     request.find("transfer-encoding:") != std::string::npos) &&
+                                    (request.find("chunked") != std::string::npos);
+                    
+                    if (!is_chunked) {
+                        // Check if we have all the body data we need for Content-Length
+                        size_t current_body_length = request.length() - header_end_pos;
+                        if (current_body_length >= expected_content_length) {
+                            // We have the complete request
+                            break;
+                        }
                     }
                     // Wait a bit and try again for more body data
                     usleep(1000); // Sleep for 1ms
@@ -422,45 +431,127 @@ std::string HttpHandler::readFullHttpRequest(int client_fd) {
                 headers_complete = true;
                 header_end_pos = request.find("\r\n\r\n") + 4;
                 
-                // Look for Content-Length header
-                size_t content_length_pos = request.find("Content-Length:");
-                if (content_length_pos == std::string::npos) {
-                    content_length_pos = request.find("content-length:");
+                // Check for Transfer-Encoding: chunked first
+                bool is_chunked = false;
+                size_t te_pos = request.find("Transfer-Encoding:");
+                if (te_pos == std::string::npos) {
+                    te_pos = request.find("transfer-encoding:");
+                }
+                if (te_pos != std::string::npos) {
+                    size_t line_end = request.find("\r\n", te_pos);
+                    if (line_end != std::string::npos) {
+                        std::string te_line = request.substr(te_pos, line_end - te_pos);
+                        // Convert to lowercase for comparison
+                        for (size_t i = 0; i < te_line.size(); ++i) {
+                            te_line[i] = std::tolower(te_line[i]);
+                        }
+                        if (te_line.find("chunked") != std::string::npos) {
+                            is_chunked = true;
+                        }
+                    }
                 }
                 
-                if (content_length_pos != std::string::npos) {
-                    // Extract content length value
-                    size_t value_start = content_length_pos;
-                    while (value_start < request.length() && request[value_start] != ':') {
-                        value_start++;
-                    }
-                    value_start++; // Skip the ':'
+                if (is_chunked) {
                     
-                    while (value_start < request.length() && request[value_start] == ' ') {
-                        value_start++;
+                    // For chunked encoding, check if we have the complete chunked stream
+                    // Look for the final chunk: "0\r\n\r\n" after the headers
+                    bool found_final_chunk = false;
+                    size_t search_pos = header_end_pos;
+                    
+                    while (search_pos < request.length()) {
+                        size_t chunk_line_end = request.find("\r\n", search_pos);
+                        if (chunk_line_end == std::string::npos) {
+                            break;
+                        }
+                        
+                        std::string chunk_size_line = request.substr(search_pos, chunk_line_end - search_pos);
+                        size_t semicolon = chunk_size_line.find(';');
+                        if (semicolon != std::string::npos) {
+                            chunk_size_line = chunk_size_line.substr(0, semicolon);
+                        }
+                        
+                        // Parse chunk size
+                        unsigned int chunk_size = 0;
+                        std::istringstream iss(chunk_size_line);
+                        iss >> std::hex >> chunk_size;
+                        
+                        // Check if this is the final chunk (size 0)
+                        if (chunk_size == 0) {
+                            // Found final chunk, now look for the trailing CRLF
+                            size_t final_crlf = request.find("\r\n", chunk_line_end + 2);
+                            if (final_crlf != std::string::npos) {
+                                // Complete chunked request found
+                                found_final_chunk = true;
+                                break;
+                            } else {
+                                // Final chunk found but no trailing CRLF yet
+                                break;
+                            }
+                        } else {
+                            // Regular chunk, skip over chunk data
+                            size_t chunk_data_start = chunk_line_end + 2;
+                            size_t chunk_data_end = chunk_data_start + chunk_size;
+                            if (chunk_data_end + 2 <= request.length()) {
+                                // Skip chunk data + trailing CRLF
+                                search_pos = chunk_data_end + 2;
+                            } else {
+                                // Don't have full chunk data yet
+                                break;
+                            }
+                        }
                     }
                     
-                    size_t value_end = value_start;
-                    while (value_end < request.length() && request[value_end] != '\r' && request[value_end] != '\n') {
-                        value_end++;
+                    if (found_final_chunk) {
+                        break; // Complete chunked request
                     }
-                    
-                    if (value_end > value_start) {
-                        std::string content_length_str = request.substr(value_start, value_end - value_start);
-                        expected_content_length = std::atoi(content_length_str.c_str());
-                    }
+                    continue;
                 } else {
-                    // No Content-Length header, request is complete after headers
-                    break;
+                    // Look for Content-Length header
+                    size_t content_length_pos = request.find("Content-Length:");
+                    if (content_length_pos == std::string::npos) {
+                        content_length_pos = request.find("content-length:");
+                    }
+                    
+                    if (content_length_pos != std::string::npos) {
+                        // Extract content length value
+                        size_t value_start = content_length_pos;
+                        while (value_start < request.length() && request[value_start] != ':') {
+                            value_start++;
+                        }
+                        value_start++; // Skip the ':'
+                        
+                        while (value_start < request.length() && request[value_start] == ' ') {
+                            value_start++;
+                        }
+                        
+                        size_t value_end = value_start;
+                        while (value_end < request.length() && request[value_end] != '\r' && request[value_end] != '\n') {
+                            value_end++;
+                        }
+                        
+                        if (value_end > value_start) {
+                            std::string content_length_str = request.substr(value_start, value_end - value_start);
+                            expected_content_length = std::atoi(content_length_str.c_str());
+                        }
+                    } else {
+                        // No Content-Length header and not chunked, request is complete after headers
+                        break;
+                    }
                 }
             }
             
-            // If headers are complete, check if we have all the body
+            // If headers are complete, check if we have all the body (only for Content-Length, not chunked)
             if (headers_complete && expected_content_length > 0) {
-                size_t current_body_length = request.length() - header_end_pos;
-                if (current_body_length >= expected_content_length) {
-                    // We have the complete request
-                    break;
+                bool is_chunked = (request.find("Transfer-Encoding:") != std::string::npos || 
+                                 request.find("transfer-encoding:") != std::string::npos) &&
+                                (request.find("chunked") != std::string::npos);
+                
+                if (!is_chunked) {
+                    size_t current_body_length = request.length() - header_end_pos;
+                    if (current_body_length >= expected_content_length) {
+                        // We have the complete request
+                        break;
+                    }
                 }
             }
         }
@@ -473,8 +564,6 @@ int HttpHandler::handleHttpRequest(int client_fd, Socket& socket) {
     // Starting HTTP request handling
     
     std::string rawRequest = readFullHttpRequest(client_fd);
-	std::cout << "---request start---" << std::endl << rawRequest
-			  << std::endl << "---request end---" << std::endl; 
     if (rawRequest.empty()) {
         // Empty request received
         return ERROR;
@@ -492,15 +581,55 @@ int HttpHandler::handleHttpRequest(int client_fd, Socket& socket) {
         errorResponse.setBody(errorContent, "text/html");
         
         std::string responseStr = errorResponse.toString();
-        ssize_t sent = send(client_fd, responseStr.c_str(), responseStr.length(), 0);
-        if (sent < 0) {
-            perror("send");
-        } else {
+        
+        // Send response in chunks for safety
+        size_t total_sent = 0;
+        const char* data = responseStr.c_str();
+        size_t total_size = responseStr.length();
+        int retry_count = 0;
+        const int MAX_RETRIES = 10;
+        
+        while (total_sent < total_size) {
+            size_t chunk_size = std::min<size_t>(total_size - total_sent, 65536);
+            ssize_t sent = send(client_fd, data + total_sent, chunk_size, 0);
+            
+            if (sent < 0) {
+                if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                    retry_count++;
+                    if (retry_count >= MAX_RETRIES) {
+                        break;
+                    }
+                    usleep(100);
+                    continue;
+                } else {
+                    perror("send");
+                    break;
+                }
+            } else if (sent == 0) {
+                break;
+            } else {
+                total_sent += sent;
+                retry_count = 0;
+            }
+        }
+        
+        if (total_sent == total_size) {
             Logger::response(400, client_fd);
         }
         
-        close(client_fd);
-        epoll_ctl(socket.getEpollfd(),EPOLL_CTL_DEL, client_fd, NULL);
+        // // Give client time to finish reading before closing socket
+        // usleep(1000); // 1ms delay
+        
+        // Safety: check if socket is still valid before operations
+        if (client_fd > 0) {
+            close(client_fd);
+            epoll_ctl(socket.getEpollfd(),EPOLL_CTL_DEL, client_fd, NULL);
+            
+            // Decrement connection count (declared in epoll.cpp)
+            extern int active_connections;
+            if (active_connections > 0) active_connections--;
+        }
+        
         return OK;
     }
     
@@ -545,14 +674,78 @@ int HttpHandler::handleHttpRequest(int client_fd, Socket& socket) {
     }
     
     std::string responseStr = response.toString();
-    ssize_t sent = send(client_fd, responseStr.c_str(), responseStr.length(), 0);
-    if (sent < 0) {
-        perror("send");
-    } else {
+    
+    // Try simple send first, regardless of size - let OS handle flow control
+    ssize_t sent = send(client_fd, responseStr.c_str(), responseStr.length(), MSG_DONTWAIT | MSG_NOSIGNAL);
+    
+    if (sent == (ssize_t)responseStr.length()) {
+        // Complete send - success!
         Logger::response(response.status_code, client_fd);
+    } else if (sent > 0 || (sent < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))) {
+        // Partial send or would block - fall back to chunked sending
+        size_t already_sent = (sent > 0) ? sent : 0;
+        // Send large responses in chunks to avoid partial sends
+        size_t total_sent = already_sent;
+        const char* data = responseStr.c_str();
+        size_t total_size = responseStr.length();
+        int consecutive_failures = 0;
+        const int MAX_CONSECUTIVE_FAILURES = 100; // Allow more failures for large responses
+        
+        while (total_sent < total_size) {
+            size_t chunk_size = std::min<size_t>(total_size - total_sent, 32768); // 32KB chunks for better flow control
+            ssize_t sent = send(client_fd, data + total_sent, chunk_size, 0);
+            
+            if (sent < 0) {
+                if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                    // Socket buffer full, wait for it to drain
+                    consecutive_failures++;
+                    if (consecutive_failures >= MAX_CONSECUTIVE_FAILURES) {
+                        std::cerr << "Too many consecutive send failures, client may be too slow" << std::endl;
+                        break;
+                    }
+                    usleep(10000); // 10ms wait for large responses
+                    continue;
+                } else {
+                    perror("send");
+                    break;
+                }
+            } else if (sent == 0) {
+                // Connection closed by client
+                std::cerr << "Client closed connection during response send" << std::endl;
+                break;
+            } else {
+                total_sent += sent;
+                consecutive_failures = 0; // Reset failure count on successful send
+                
+                // Progress indicator for very large responses
+                if (total_size > 10000000 && total_sent % 1000000 == 0) { // Every 1MB for responses >10MB
+                    std::cout << "Sent " << total_sent / 1000000 << "MB of " << total_size / 1000000 << "MB" << std::endl;
+                }
+            }
+        }
+        
+        if (total_sent == total_size) {
+            Logger::response(response.status_code, client_fd);
+        } else {
+            std::cerr << "Partial send: " << total_sent << " of " << total_size << " bytes" << std::endl;
+        }
+    } else {
+        // Send failed completely
+        perror("send failed completely");
     }
     
-    close(client_fd);
-    epoll_ctl(socket.getEpollfd(),EPOLL_CTL_DEL, client_fd, NULL);
+    // // Give client time to finish reading before closing socket
+    // usleep(1000); // 1ms delay
+    
+    // Safety: check if socket is still valid before operations
+    if (client_fd > 0) {
+        close(client_fd);
+        epoll_ctl(socket.getEpollfd(),EPOLL_CTL_DEL, client_fd, NULL);
+        
+        // Decrement connection count (declared in epoll.cpp)
+        extern int active_connections;
+        if (active_connections > 0) active_connections--;
+    }
+    
     return OK;
 }
