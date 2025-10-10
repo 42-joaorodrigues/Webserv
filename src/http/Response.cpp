@@ -1,6 +1,7 @@
 #include "Response.hpp"
 #include <ctime>
 #include <iomanip>
+#include <iostream>
 
 
 std::string getCurrentDate()
@@ -17,7 +18,6 @@ std::string getCurrentDate()
 std::string Response::toString() const //create response
 {
     std::ostringstream response;
-
 
     response << "HTTP/1.1" << " " << status_code << " " << status_message << "\r\n";
 

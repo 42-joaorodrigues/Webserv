@@ -483,6 +483,28 @@ int HttpHandler::handleHttpRequest(int client_fd, Socket& socket) {
         epoll_ctl(socket.getEpollfd(),EPOLL_CTL_DEL, client_fd, NULL);
         return OK;
     }
+
+    // Validate parsed request (headers, method, content-length, version, host)
+    if (!req.isValid()) {
+        Logger::debug("Invalid HTTP request (failed validation)");
+        Response errorResponse;
+        errorResponse.setStatus(400, "Bad Request");
+        int serverid = socket.getConnection(client_fd);
+        std::string errorContent = HttpUtils::getErrorPage(400, serverid, socket);
+        errorResponse.setBody(errorContent, "text/html");
+
+        std::string responseStr = errorResponse.toString();
+        ssize_t sent = send(client_fd, responseStr.c_str(), responseStr.length(), 0);
+        if (sent < 0) {
+            perror("send");
+        } else {
+            Logger::response(400, client_fd);
+        }
+
+        close(client_fd);
+        epoll_ctl(socket.getEpollfd(),EPOLL_CTL_DEL, client_fd, NULL);
+        return OK;
+    }
     
     Logger::request(req.method, req.uri, client_fd);
     
