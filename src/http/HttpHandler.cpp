@@ -576,6 +576,7 @@ int HttpHandler::handleHttpRequest(int client_fd, Socket& socket) {
         Logger::debug("Failed to parse HTTP request");
         Response errorResponse;
         errorResponse.setStatus(400, "Bad Request");
+        errorResponse.headers["Connection"] = "close"; // Always close on parse error
         int serverid = socket.getConnection(client_fd);
         std::string errorContent = HttpUtils::getErrorPage(400, serverid, socket);
         errorResponse.setBody(errorContent, "text/html");
@@ -591,7 +592,7 @@ int HttpHandler::handleHttpRequest(int client_fd, Socket& socket) {
         
         while (total_sent < total_size) {
             size_t chunk_size = std::min<size_t>(total_size - total_sent, 65536);
-            ssize_t sent = send(client_fd, data + total_sent, chunk_size, 0);
+            ssize_t sent = send(client_fd, data + total_sent, chunk_size, MSG_NOSIGNAL);
             
             if (sent < 0) {
                 if (errno == EAGAIN || errno == EWOULDBLOCK) {
@@ -601,6 +602,10 @@ int HttpHandler::handleHttpRequest(int client_fd, Socket& socket) {
                     }
                     usleep(100);
                     continue;
+                } else if (errno == EPIPE || errno == ECONNRESET) {
+                    // Client closed connection - this is normal, just log and break
+                    Logger::debug("Client closed connection during error response send");
+                    break;
                 } else {
                     perror("send");
                     break;
@@ -646,6 +651,29 @@ int HttpHandler::handleHttpRequest(int client_fd, Socket& socket) {
     
     Response response;
     
+    // Determine if we should keep the connection alive
+    bool keepAlive = false;
+    std::map<std::string, std::string>::const_iterator connIt = req.headers.find("Connection");
+    if (connIt == req.headers.end()) {
+        connIt = req.headers.find("connection");
+    }
+    
+    // HTTP/1.1 defaults to keep-alive, HTTP/1.0 defaults to close
+    if (req.http_version == "HTTP/1.1") {
+        keepAlive = true;
+        // Client can explicitly request close
+        if (connIt != req.headers.end() && 
+            (connIt->second == "close" || connIt->second == "Close")) {
+            keepAlive = false;
+        }
+    } else {
+        // HTTP/1.0 - only keep-alive if explicitly requested
+        if (connIt != req.headers.end() && 
+            (connIt->second == "keep-alive" || connIt->second == "Keep-Alive")) {
+            keepAlive = true;
+        }
+    }
+    
     // Check if the HTTP method is allowed for this location
     if (matched.location != NULL && !matched.location->methods.empty()) {
         bool methodAllowed = false;
@@ -673,6 +701,13 @@ int HttpHandler::handleHttpRequest(int client_fd, Socket& socket) {
         handleLocationRequest(req, matched, serverid, socket, response);
     }
     
+    // Set Connection header based on keep-alive decision
+    if (keepAlive) {
+        response.headers["Connection"] = "keep-alive";
+    } else {
+        response.headers["Connection"] = "close";
+    }
+    
     std::string responseStr = response.toString();
     
     // Try simple send first, regardless of size - let OS handle flow control
@@ -693,7 +728,7 @@ int HttpHandler::handleHttpRequest(int client_fd, Socket& socket) {
         
         while (total_sent < total_size) {
             size_t chunk_size = std::min<size_t>(total_size - total_sent, 32768); // 32KB chunks for better flow control
-            ssize_t sent = send(client_fd, data + total_sent, chunk_size, 0);
+            ssize_t sent = send(client_fd, data + total_sent, chunk_size, MSG_NOSIGNAL);
             
             if (sent < 0) {
                 if (errno == EAGAIN || errno == EWOULDBLOCK) {
@@ -705,6 +740,10 @@ int HttpHandler::handleHttpRequest(int client_fd, Socket& socket) {
                     }
                     usleep(10000); // 10ms wait for large responses
                     continue;
+                } else if (errno == EPIPE || errno == ECONNRESET) {
+                    // Client closed connection - this is normal in high-concurrency scenarios
+                    Logger::debug("Client closed connection during response send (EPIPE/ECONNRESET)");
+                    break;
                 } else {
                     perror("send");
                     break;
@@ -732,20 +771,25 @@ int HttpHandler::handleHttpRequest(int client_fd, Socket& socket) {
     } else {
         // Send failed completely
         perror("send failed completely");
+        keepAlive = false; // Force close on send failure
     }
     
-    // // Give client time to finish reading before closing socket
-    // usleep(1000); // 1ms delay
-    
-    // Safety: check if socket is still valid before operations
-    if (client_fd > 0) {
-        close(client_fd);
-        epoll_ctl(socket.getEpollfd(),EPOLL_CTL_DEL, client_fd, NULL);
+    // Only close the connection if keep-alive is disabled or there was an error
+    if (!keepAlive) {
+        // // Give client time to finish reading before closing socket
+        // usleep(1000); // 1ms delay
         
-        // Decrement connection count (declared in epoll.cpp)
-        extern int active_connections;
-        if (active_connections > 0) active_connections--;
+        // Safety: check if socket is still valid before operations
+        if (client_fd > 0) {
+            close(client_fd);
+            epoll_ctl(socket.getEpollfd(),EPOLL_CTL_DEL, client_fd, NULL);
+            
+            // Decrement connection count (declared in epoll.cpp)
+            extern int active_connections;
+            if (active_connections > 0) active_connections--;
+        }
     }
+    // If keep-alive is true, socket stays open for next request
     
     return OK;
 }
