@@ -6,7 +6,7 @@
 /*   By: joao-alm <joao-alm@student.42luxembourg    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/06 14:53:35 by naiqing           #+#    #+#             */
-/*   Updated: 2025/10/10 19:42:00 by joao-alm         ###   ########.fr       */
+/*   Updated: 2025/10/15 15:55:09 by joao-alm         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -203,7 +203,11 @@ int waitEpoll(Socket &socket)
             }
             else
             {
-                // Handle non-EPOLLIN event
+                // Unexpected event type - log for debugging
+                std::ostringstream oss;
+                oss << "Unexpected epoll event on fd " << events[j].data.fd 
+                    << ": " << events[j].events;
+                Logger::error(oss.str());
             }
         }
 	}
@@ -218,8 +222,30 @@ int initEpoll(Socket &socket)
         return ERROR;
     }
 
-    Logger::serverStart("Server Created. ServerName[localhost] Host[127.0.0.1] Port[8002]");
-
+    // Log each server that was created
+    for (size_t i = 0; i < socket.getNumberOfListeningSockets(); ++i)
+    {
+        const Server& srv = socket.getServer(i);
+        std::ostringstream oss;
+        oss << "Server Created. ";
+        
+        // Get server names (may have multiple)
+        const std::vector<std::string>& names = srv.getServerNames();
+        if (!names.empty())
+        {
+            oss << "ServerName[";
+            for (size_t j = 0; j < names.size(); ++j)
+            {
+                if (j > 0) oss << ", ";
+                oss << names[j];
+            }
+            oss << "] ";
+        }
+        
+        oss << "Host[" << srv.getIp() << "] Port[" << srv.getPort() << "]";
+        Logger::serverStart(oss.str());
+    }
+	
     //main loop, wait and handle epoll events
     //if no ERROR, loop continues
     while (waitEpoll(socket) != ERROR)

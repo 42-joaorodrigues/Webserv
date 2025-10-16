@@ -27,19 +27,6 @@
         <div class="particle"></div>
     </div>
 
-    <!-- Background Music Player -->
-    <div class="music-player">
-        <button id="musicToggle" class="music-button">
-            <span class="music-icon">🎵</span>
-            <span class="music-text">Music</span>
-        </button>
-        <audio id="backgroundMusic" loop preload="auto">
-            <source src="../music/background.mp3" type="audio/mpeg">
-            <source src="../music/background.ogg" type="audio/ogg">
-            Your browser does not support the audio element.
-        </audio>
-    </div>
-
     <div class="main-container">
         <nav class="navigation">
             <a href="/" class="nav-button">Home</a>
@@ -92,100 +79,71 @@
                         </div>
                     </div>
 
-                    <!-- File Upload Testing -->
-                    <div class="test-category">
-                        <h3>📤 File Upload Testing</h3>
-                        <div class="upload-test">
-                            <div class="upload-area" onclick="document.getElementById('fileInput').click()">
-                                <span class="upload-icon">📁</span>
-                                <span class="upload-text">Click to select file or drag and drop</span>
-                                <input type="file" id="fileInput" style="display: none;"
-                                    onchange="handleFileSelect(event)">
-                            </div>
-                            <div class="upload-controls">
-                                <input type="text" id="uploadPath" placeholder="Upload path" value="/upload">
-                                <button onclick="testUpload()" class="test-btn upload-btn">Upload File</button>
-                            </div>
-                            <div class="test-result" id="uploadResult"></div>
-                        </div>
-                    </div>
+					<!-- File Upload -->
+					<div class="test-category">
+						<h3>📤 Upload File</h3>
+						<div class="upload-area" onclick="document.getElementById('fileInput').click()">
+							<span class="upload-icon">📁</span>
+							<span class="upload-text">Click to select file or drag and drop</span>
+							<input type="file" id="fileInput" style="display: none;"
+								onchange="handleFileSelect(event)">
+						</div>
+						<div class="test-controls">
+							<input type="text" id="uploadPath" placeholder="Upload path" value="/upload">
+							<button onclick="testUpload()" class="test-btn upload-btn">Upload File</button>
+						</div>
+						<div class="test-result" id="uploadResult"></div>
+					</div>
+					
+					<!-- File Listing, Redirect & Error Pages -->
+					<div class="test-category">
+						<h3>📁 Directory Listing & Redirection</h3>
+						<div class="test-grid">
+							<div class="test-item">
+								<h4>Directory Listing</h4>
+								<div class="test-controls">
+									<input type="text" id="listUrl" placeholder="/upload/" value="/upload/">
+									<button onclick="openInNewTab('listUrl')" class="test-btn dir-btn">Open in New Tab</button>
+								</div>
+							</div>
 
-                    <!-- CGI Testing -->
-                    <div class="test-category">
-                        <h3>⚙️ CGI Script Testing</h3>
-                        <div class="test-grid">
-                            <div class="test-item">
-                                <h4>Python CGI</h4>
-                                <div class="test-controls">
-                                    <input type="text" id="pythonCgiUrl" placeholder="/cgi-python/script.py"
-                                        value="/cgi-python/test.py">
-                                    <textarea id="pythonCgiData" placeholder="CGI input data..."></textarea>
-                                    <button onclick="testPythonCgi()" class="test-btn cgi-btn">Test Python</button>
-                                </div>
-                                <div class="test-result" id="pythonCgiResult"></div>
-                            </div>
+							<div class="test-item">
+								<h4>Redirect Test</h4>
+								<div class="test-controls">
+									<input type="text" id="redirectUrl" placeholder="/redirect" value="/redirect">
+									<button onclick="openInNewTab('redirectUrl')" class="test-btn dir-btn">Open in New Tab</button>
+								</div>
+							</div>
+						</div>
+					</div>
 
-                            <div class="test-item">
-                                <h4>Bash CGI</h4>
-                                <div class="test-controls">
-                                    <input type="text" id="bashCgiUrl" placeholder="/cgi-bash/script.sh"
-                                        value="/cgi-bash/test.sh">
-                                    <textarea id="bashCgiData" placeholder="CGI input data..."></textarea>
-                                    <button onclick="testBashCgi()" class="test-btn cgi-btn">Test Bash</button>
-                                </div>
-                                <div class="test-result" id="bashCgiResult"></div>
-                            </div>
-                        </div>
-                    </div>
+					<!-- CGI Script Testing -->
+					<div class="test-category">
+						<h3>⚙️ CGI Script Testing</h3>
+						<div class="test-grid">
+							<div class="test-item">
+								<h4>Python CGI (toupper.py)</h4>
+								<div class="test-controls">
+									<input type="text" id="pythonCgiUrl" placeholder="/cgi-bin/python/toupper.py" value="/cgi-bin/python/toupper.py">
+									<input type="text" id="pythonCgiData" placeholder="Enter text to convert to uppercase..." value="">
+									<button onclick="testPythonCgi()" class="test-btn cgi-btn">Test Python CGI</button>
+								</div>
+								<div class="test-result" id="pythonCgiResult"></div>
+							</div>
 
-                    <!-- Directory Testing -->
-                    <div class="test-category">
-                        <h3>📁 Directory & Listing Testing</h3>
-                        <div class="test-grid">
-                            <div class="test-item">
-                                <h4>Directory Listing</h4>
-                                <div class="test-controls">
-                                    <input type="text" id="dirUrl" placeholder="/directory/" value="/files/sub-directory/">
-                                    <button onclick="testDirectory()" class="test-btn dir-btn">Test Directory</button>
-                                </div>
-                                <div class="test-result" id="dirResult"></div>
-                            </div>
+							<div class="test-item">
+								<h4>Bash CGI (create_file.sh)</h4>
+								<div class="test-controls">
+									<input type="text" id="bashCgiUrl" placeholder="/cgi-bin/bash/create_file.sh" value="/cgi-bin/bash/create_file.sh">
+									<input type="text" id="bashCgiData" placeholder="Enter desired file size (e.g. 10, 10K or 10M)" value="">
+									<button onclick="testBashCgi()" class="test-btn cgi-btn">Test Bash CGI</button>
+								</div>
+								<div class="test-result" id="bashCgiResult"></div>
+							</div>
+						</div>
+					</div>
 
-                            <div class="test-item">
-                                <h4>Autoindex Test</h4>
-                                <div class="test-controls">
-                                    <input type="text" id="autoindexUrl" placeholder="/files/" value="/files/">
-                                    <button onclick="testAutoindex()" class="test-btn dir-btn">Test Autoindex</button>
-                                </div>
-                                <div class="test-result" id="autoindexResult"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Error Testing -->
-                    <div class="test-category">
-                        <h3>❌ Error Page Testing</h3>
-                        <div class="test-grid">
-                            <div class="test-item">
-                                <h4>404 Not Found</h4>
-                                <button onclick="test404()" class="test-btn error-btn">Test 404</button>
-                                <div class="test-result" id="error404Result"></div>
-                            </div>
-
-                            <div class="test-item">
-                                <h4>403 Forbidden</h4>
-                                <button onclick="test403()" class="test-btn error-btn">Test 403</button>
-                                <div class="test-result" id="error403Result"></div>
-                            </div>
-
-                            <div class="test-item">
-                                <h4>413 Payload Too Large</h4>
-                                <button onclick="test413()" class="test-btn error-btn">Test 413</button>
-                                <div class="test-result" id="error413Result"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Cookies Testing -->
+					<!-- Cookies Testing -->
                     <div class="test-category">
                         <h3>🍪 Cookie Testing</h3>
                         <div class="test-grid">
@@ -197,21 +155,27 @@
                             </div>
                         </div>
                     </div>
-                </div>
-                <!-- Performance Stats -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-number" id="totalTests">0</div>
-                        <div class="stat-label">Tests Run</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="successfulTests">0</div>
-                        <div class="stat-label">Successful</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="avgResponseTime">0ms</div>
-                        <div class="stat-label">Avg Response Time</div>
-                    </div>
+
+					<!-- Error Pages -->
+					<div class="test-category">
+						<h3>❌ Error Page Testing</h3>
+						<div class="test-grid">
+							<div class="test-item">
+								<h4>404 Not Found</h4>
+								<button onclick="openInNewTab('/errors/404/404.html')" class="test-btn error-btn">Open 404 Page</button>
+							</div>
+
+							<div class="test-item">
+								<h4>403 Forbidden</h4>
+								<button onclick="openInNewTab('/errors/403/403.html')" class="test-btn error-btn">Open 403 Page</button>
+							</div>
+
+							<div class="test-item">
+								<h4>413 Payload Too Large</h4>
+								<button onclick="openInNewTab('/errors/413/413.html')" class="test-btn error-btn">Open 413 Page</button>
+							</div>
+						</div>
+					</div>
                 </div>
     </div>
     </section>
@@ -219,43 +183,6 @@
     </div>
 
     <script src="js/tests.js"></script>
-    <script>
-        // Background Music Controller
-        const musicToggle = document.getElementById('musicToggle');
-        const backgroundMusic = document.getElementById('backgroundMusic');
-        const musicIcon = document.querySelector('.music-icon');
-        const musicText = document.querySelector('.music-text');
-        let isPlaying = false;
-
-        musicToggle.addEventListener('click', function () {
-            if (isPlaying) {
-                backgroundMusic.pause();
-                musicIcon.textContent = '🎵';
-                musicText.textContent = 'Music';
-                musicToggle.classList.remove('playing');
-                isPlaying = false;
-            } else {
-                backgroundMusic.play().then(() => {
-                    musicIcon.textContent = '🎶';
-                    musicText.textContent = 'Playing';
-                    musicToggle.classList.add('playing');
-                    isPlaying = true;
-                }).catch(error => {
-                    console.log('Audio playback failed:', error);
-                });
-            }
-        });
-
-        backgroundMusic.volume = 0.3;
-
-        document.addEventListener('visibilitychange', function () {
-            if (document.hidden && isPlaying) {
-                backgroundMusic.pause();
-            } else if (!document.hidden && isPlaying) {
-                backgroundMusic.play();
-            }
-        });
-    </script>
 </body>
 
 </html>

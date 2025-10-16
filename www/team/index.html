@@ -25,19 +25,6 @@
         <div class="particle"></div>
     </div>
 
-    <!-- Background Music Player -->
-    <div class="music-player">
-        <button id="musicToggle" class="music-button">
-            <span class="music-icon">🎵</span>
-            <span class="music-text">Music</span>
-        </button>
-        <audio id="backgroundMusic" loop preload="auto">
-            <source src="../music/background.mp3" type="audio/mpeg">
-            <source src="../music/background.ogg" type="audio/ogg">
-            Your browser does not support the audio element.
-        </audio>
-    </div>
-
     <div class="main-container">
         <nav class="navigation">
             <a href="/" class="nav-button">Home</a>
@@ -103,42 +90,6 @@
                 this.style.display = 'block';
                 this.nextElementSibling.style.display = 'none';
             });
-        });
-
-        // Background Music Controller
-        const musicToggle = document.getElementById('musicToggle');
-        const backgroundMusic = document.getElementById('backgroundMusic');
-        const musicIcon = document.querySelector('.music-icon');
-        const musicText = document.querySelector('.music-text');
-        let isPlaying = false;
-
-        musicToggle.addEventListener('click', function() {
-            if (isPlaying) {
-                backgroundMusic.pause();
-                musicIcon.textContent = '🎵';
-                musicText.textContent = 'Music';
-                musicToggle.classList.remove('playing');
-                isPlaying = false;
-            } else {
-                backgroundMusic.play().then(() => {
-                    musicIcon.textContent = '🎶';
-                    musicText.textContent = 'Playing';
-                    musicToggle.classList.add('playing');
-                    isPlaying = true;
-                }).catch(error => {
-                    console.log('Audio playback failed:', error);
-                });
-            }
-        });
-
-        backgroundMusic.volume = 0.3;
-
-        document.addEventListener('visibilitychange', function() {
-            if (document.hidden && isPlaying) {
-                backgroundMusic.pause();
-            } else if (!document.hidden && isPlaying) {
-                backgroundMusic.play();
-            }
         });
     </script>
 </body>

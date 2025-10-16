@@ -1,16 +1,3 @@
-// Test Statistics
-let testStats = {
-    total: 0,
-    successful: 0,
-    responseTimes: []
-};
-
-// Matrix login state
-let matrixUser = {
-    username: null,
-    isLoggedIn: false
-};
-
 // File for upload
 let selectedFile = null;
 
@@ -40,16 +27,6 @@ async function makeRequest(method, url, data = null, isFile = false) {
         const endTime = Date.now();
         const responseTime = endTime - startTime;
         
-        // Update stats
-        testStats.total++;
-        testStats.responseTimes.push(responseTime);
-        
-        if (response.ok) {
-            testStats.successful++;
-        }
-        
-        updateStats();
-        
         let responseText = '';
         const contentType = response.headers.get('content-type');
         
@@ -73,11 +50,6 @@ async function makeRequest(method, url, data = null, isFile = false) {
             responseTime: responseTime
         };
     } catch (error) {
-        const endTime = Date.now();
-        const responseTime = endTime - startTime;
-        testStats.total++;
-        testStats.responseTimes.push(responseTime);
-        updateStats();
         
         return {
             ok: false,
@@ -111,17 +83,6 @@ function displayResult(elementId, result) {
     output += `\nBody:\n${result.body}`;
     
     element.textContent = output;
-}
-
-// Update statistics display
-function updateStats() {
-    document.getElementById('totalTests').textContent = testStats.total;
-    document.getElementById('successfulTests').textContent = testStats.successful;
-    
-    if (testStats.responseTimes.length > 0) {
-        const avgTime = testStats.responseTimes.reduce((a, b) => a + b, 0) / testStats.responseTimes.length;
-        document.getElementById('avgResponseTime').textContent = Math.round(avgTime) + 'ms';
-    }
 }
 
 // Test Functions
@@ -183,9 +144,28 @@ async function testUpload() {
     displayResult('uploadResult', result);
 }
 
+// File Delete Test
+async function testFileDelete() {
+    const url = document.getElementById('fileDeleteUrl').value;
+    const resultElement = document.getElementById('fileDeleteResult');
+    
+    if (!url || url === '/upload/<uploaded files>') {
+        resultElement.innerHTML = '<div class="error">✗ Please specify a file path (e.g., /upload/test.txt)</div>';
+        resultElement.className = 'test-result';
+        return;
+    }
+    
+    resultElement.innerHTML = 'Deleting file...';
+    resultElement.className = 'test-result loading';
+    
+    const result = await makeRequest('DELETE', url);
+    displayResult('fileDeleteResult', result);
+}
+
+// Python CGI Test
 // Python CGI Test
 async function testPythonCgi() {
-    const url = document.getElementById('pythonCgiUrl').value || '/cgi-python/test.py';
+    const url = document.getElementById('pythonCgiUrl').value || '/cgi-bin/python/toupper.py';
     const data = document.getElementById('pythonCgiData').value;
     const resultElement = document.getElementById('pythonCgiResult');
     
@@ -198,7 +178,7 @@ async function testPythonCgi() {
 
 // Bash CGI Test
 async function testBashCgi() {
-    const url = document.getElementById('bashCgiUrl').value || '/cgi-bash/test.sh';
+    const url = document.getElementById('bashCgiUrl').value || '/cgi-bin/bash/create_file.sh';
     const data = document.getElementById('bashCgiData').value;
     const resultElement = document.getElementById('bashCgiResult');
     
@@ -207,51 +187,6 @@ async function testBashCgi() {
     
     const result = await makeRequest('POST', url, data);
     displayResult('bashCgiResult', result);
-}
-
-// Directory Listing Test
-async function testDirectory() {
-    const url = document.getElementById('dirUrl').value || '/files/';
-    const resultElement = document.getElementById('dirResult');
-    
-    resultElement.innerHTML = 'Testing directory listing...';
-    resultElement.className = 'test-result loading';
-    
-    const result = await makeRequest('GET', url);
-    displayResult('dirResult', result);
-}
-
-// Autoindex Test
-async function testAutoindex() {
-    const url = document.getElementById('autoindexUrl').value || '/files/';
-    const resultElement = document.getElementById('autoindexResult');
-    
-    resultElement.innerHTML = 'Testing autoindex...';
-    resultElement.className = 'test-result loading';
-    
-    const result = await makeRequest('GET', url);
-    displayResult('autoindexResult', result);
-}
-
-// Error Tests
-async function test404() {
-    const resultElement = document.getElementById('error404Result');
-    
-    resultElement.innerHTML = 'Testing 404 error...';
-    resultElement.className = 'test-result loading';
-    
-    const result = await makeRequest('GET', '/nonexistent-file-' + Date.now());
-    displayResult('error404Result', result);
-}
-
-async function test403() {
-    const resultElement = document.getElementById('error403Result');
-    
-    resultElement.innerHTML = 'Testing 403 error...';
-    resultElement.className = 'test-result loading';
-    
-    const result = await makeRequest('GET', '/files/sub-directory');
-    displayResult('error403Result', result);
 }
 
 function confirmCookie() {
@@ -274,54 +209,11 @@ function confirmCookie() {
     // small dramatic pause
     setTimeout(() => {
         if (confirm("😈 Are you *really* sure you want the cookie?")) {
-            window.location.href = 'http://127.0.0.1:8080/cgi-python/session.py';
+			window.open('http://127.0.0.1:8080/cgi-bin/python/session.py', '_blank');
         } else {
             container.innerHTML = "<span style='color:green;'>Wise choice... for now 🍀</span>";
         }
     }, 1500);
-}
-
-async function test413() {
-    console.log('=== test413 FUNCTION CALLED ===');
-    const resultElement = document.getElementById('error413Result');
-    
-    resultElement.innerHTML = 'Testing 413 error...';
-    resultElement.className = 'test-result loading';
-    
-    try {
-        console.log('Creating 3.1MB file...');
-        
-        // Create a simple text file that's 2MB
-        const largeContent = 'A'.repeat(2 * 1024 * 1024); // 3.1MB of 'A' characters
-        console.log('Content created, length:', largeContent.length, 'bytes');
-        
-        const blob = new Blob([largeContent], { type: 'text/plain' });
-        const file = new File([blob], 'test-413.txt', { type: 'text/plain' });
-        console.log('File object created, name:', file.name, 'size:', file.size, 'bytes');
-        
-        // Create FormData for file upload
-        const formData = new FormData();
-        formData.append('file', file);
-        console.log('FormData created with file attached');
-        
-        // Try to upload the 2MB file to /files
-        console.log('Attempting to upload 3.1MB file to /files...');
-        const result = await makeRequest('POST', '/upload', formData, true);
-        console.log('Upload result:', result.status, result.statusText);
-        
-        displayResult('error413Result', result);
-        console.log('=== test413 FUNCTION COMPLETED SUCCESSFULLY ===');
-    } catch (error) {
-        console.error('=== ERROR CAUGHT IN test413 ===', error);
-        displayResult('error413Result', {
-            status: 0,
-            statusText: 'Error',
-            error: true,
-            body: error.message,
-            headers: {},
-            responseTime: 0
-        });
-    }
 }
 
 // File Selection Handler
@@ -344,4 +236,23 @@ function formatFileSize(bytes) {
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// Open URL from input in new tab
+function openInNewTab(inputIdOrUrl) {
+    let url;
+    
+    // Check if it's a direct URL (starts with /) or an element ID
+    if (inputIdOrUrl.startsWith('/')) {
+        url = inputIdOrUrl;
+    } else {
+        const element = document.getElementById(inputIdOrUrl);
+        if (element) {
+            url = element.value;
+        }
+    }
+    
+    if (url) {
+        window.open(url, '_blank');
+    }
 }

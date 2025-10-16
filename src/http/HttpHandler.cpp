@@ -22,6 +22,33 @@ void HttpHandler::handleLocationRequest(const Request& req, const MatchedLocatio
     std::string requestedPath = req.uri;
     std::string effectiveRoot = matched.effective_root;
     
+    // Check for redirects FIRST (before any other processing)
+    if (matched.location != NULL && !matched.location->redirect.empty()) {
+        // Get the first redirect (should only be one per location)
+        std::map<int, std::string>::const_iterator redirectIt = matched.location->redirect.begin();
+        if (redirectIt != matched.location->redirect.end()) {
+            int statusCode = redirectIt->first;
+            std::string redirectUrl = redirectIt->second;
+            
+            // Set redirect response
+            if (statusCode == 301) {
+                response.setStatus(301, "Moved Permanently");
+            } else if (statusCode == 302) {
+                response.setStatus(302, "Found");
+            } else if (statusCode == 307) {
+                response.setStatus(307, "Temporary Redirect");
+            } else if (statusCode == 308) {
+                response.setStatus(308, "Permanent Redirect");
+            } else {
+                response.setStatus(statusCode, "Redirect");
+            }
+            
+            response.headers["Location"] = redirectUrl;
+            response.setBody("", "text/html");
+            return;
+        }
+    }
+    
     // Check client max body size for ALL requests (not just uploads)
     const Server& server = socket.getServer(serverid);
     
@@ -372,7 +399,7 @@ void HttpHandler::handleLocationRequest(const Request& req, const MatchedLocatio
 }
 
 std::string HttpHandler::readFullHttpRequest(int client_fd) {
-    const int BUFFER_SIZE = 4096;
+    const int BUFFER_SIZE = 131072; // 128KB - much better for large uploads
     char buffer[BUFFER_SIZE];
     std::string request;
     int max_attempts = 1000; // Prevent infinite loops
@@ -532,6 +559,13 @@ std::string HttpHandler::readFullHttpRequest(int client_fd) {
                         if (value_end > value_start) {
                             std::string content_length_str = request.substr(value_start, value_end - value_start);
                             expected_content_length = std::atoi(content_length_str.c_str());
+                            
+                            // Pre-allocate memory for the entire request to avoid reallocations
+                            // This is a huge performance boost for large uploads!
+                            size_t total_expected_size = header_end_pos + expected_content_length;
+                            if (total_expected_size > request.capacity()) {
+                                request.reserve(total_expected_size + 1024); // Extra 1KB for safety
+                            }
                         }
                     } else {
                         // No Content-Length header and not chunked, request is complete after headers

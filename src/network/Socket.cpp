@@ -6,7 +6,7 @@
 /*   By: joao-alm <joao-alm@student.42luxembourg    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/07 11:08:49 by nacao             #+#    #+#             */
-/*   Updated: 2025/10/10 19:35:05 by joao-alm         ###   ########.fr       */
+/*   Updated: 2025/10/15 20:45:05 by joao-alm         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,12 +67,9 @@ int Socket::initsocket()
 			return ERROR;
 		}
 		
-		// Add SO_REUSEPORT for better load distribution (Linux)
-		if (setsockopt(getSocket(i), SOL_SOCKET, SO_REUSEPORT, &num, sizeof(num)) < 0)
-		{
-			// Not fatal - SO_REUSEPORT might not be supported on all systems
-			perror("setsockopt SO_REUSEPORT (non-fatal)");
-		}
+		// NOTE: SO_REUSEPORT removed - we want only ONE server per port
+		// SO_REUSEPORT allows multiple processes to bind to the same port,
+		// which would prevent proper "address already in use" errors
 		
 		// Set larger socket buffers for high throughput
 		int buffer_size = 1024 * 1024; // 1MB buffers
