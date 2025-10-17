@@ -107,10 +107,13 @@ std::string CGIHandler::execute() {
 					close(in_pipe[1]);
 					write_done = true;
 				}
-			} else if (written < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
+			} else if (written < 0) {
+				// Write would block or failed - will retry on next poll
+				// Don't throw error, just continue
+			} else if (written == 0) {
+				// Pipe closed
 				close(in_pipe[1]);
-				close(out_pipe[0]);
-				throw std::runtime_error("write to CGI failed");
+				write_done = true;
 			}
 		}
 		
@@ -124,10 +127,9 @@ std::string CGIHandler::execute() {
 			} else if (bytes_read == 0) {
 				// CGI closed stdout - we're done reading
 				read_done = true;
-			} else if (errno != EAGAIN && errno != EWOULDBLOCK) {
-				close(in_pipe[1]);
-				close(out_pipe[0]);
-				throw std::runtime_error("read from CGI failed");
+			} else {
+				// Read would block or failed - will retry on next poll
+				// Don't throw error, just continue
 			}
 		}
 		

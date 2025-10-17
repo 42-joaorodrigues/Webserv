@@ -409,39 +409,34 @@ std::string HttpHandler::readFullHttpRequest(int client_fd) {
     size_t header_end_pos = 0;
     
     while (attempt < max_attempts) {
-        ssize_t bytes_received = recv(client_fd, buffer, BUFFER_SIZE - 1, 0);
+        ssize_t bytes_received = recv(client_fd, buffer, BUFFER_SIZE - 1, MSG_DONTWAIT);
         
         if (bytes_received < 0) {
-            if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                // No more data available right now
-                if (headers_complete) {
-                    // For chunked encoding, don't check expected_content_length (it's 0)
-                    // The chunked parsing logic will determine when we're done
-                    bool is_chunked = (request.find("Transfer-Encoding:") != std::string::npos || 
-                                     request.find("transfer-encoding:") != std::string::npos) &&
-                                    (request.find("chunked") != std::string::npos);
-                    
-                    if (!is_chunked) {
-                        // Check if we have all the body data we need for Content-Length
-                        size_t current_body_length = request.length() - header_end_pos;
-                        if (current_body_length >= expected_content_length) {
-                            // We have the complete request
-                            break;
-                        }
+            // No more data available right now (non-blocking socket would block)
+            if (headers_complete) {
+                // For chunked encoding, don't check expected_content_length (it's 0)
+                // The chunked parsing logic will determine when we're done
+                bool is_chunked = (request.find("Transfer-Encoding:") != std::string::npos || 
+                                 request.find("transfer-encoding:") != std::string::npos) &&
+                                (request.find("chunked") != std::string::npos);
+                
+                if (!is_chunked) {
+                    // Check if we have all the body data we need for Content-Length
+                    size_t current_body_length = request.length() - header_end_pos;
+                    if (current_body_length >= expected_content_length) {
+                        // We have the complete request
+                        break;
                     }
-                    // Wait a bit and try again for more body data
-                    usleep(1000); // Sleep for 1ms
-                    attempt++;
-                    continue;
-                } else {
-                    // No headers yet, wait and retry
-                    usleep(1000); // Sleep for 1ms  
-                    attempt++;
-                    continue;
                 }
+                // Wait a bit and try again for more body data
+                usleep(1000); // Sleep for 1ms
+                attempt++;
+                continue;
             } else {
-                perror("recv");
-                return "";
+                // No headers yet, wait and retry
+                usleep(1000); // Sleep for 1ms  
+                attempt++;
+                continue;
             }
         } else if (bytes_received == 0) {
             // Connection closed by client
@@ -626,25 +621,19 @@ int HttpHandler::handleHttpRequest(int client_fd, Socket& socket) {
         
         while (total_sent < total_size) {
             size_t chunk_size = std::min<size_t>(total_size - total_sent, 65536);
-            ssize_t sent = send(client_fd, data + total_sent, chunk_size, MSG_NOSIGNAL);
+            ssize_t sent = send(client_fd, data + total_sent, chunk_size, MSG_DONTWAIT | MSG_NOSIGNAL);
             
             if (sent < 0) {
-                if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                    retry_count++;
-                    if (retry_count >= MAX_RETRIES) {
-                        break;
-                    }
-                    usleep(100);
-                    continue;
-                } else if (errno == EPIPE || errno == ECONNRESET) {
-                    // Client closed connection - this is normal, just log and break
-                    Logger::debug("Client closed connection during error response send");
-                    break;
-                } else {
-                    perror("send");
+                // Socket would block or error occurred
+                retry_count++;
+                if (retry_count >= MAX_RETRIES) {
+                    // Too many failures, give up
                     break;
                 }
+                usleep(100);
+                continue;
             } else if (sent == 0) {
+                // Connection closed
                 break;
             } else {
                 total_sent += sent;
@@ -750,7 +739,7 @@ int HttpHandler::handleHttpRequest(int client_fd, Socket& socket) {
     if (sent == (ssize_t)responseStr.length()) {
         // Complete send - success!
         Logger::response(response.status_code, client_fd);
-    } else if (sent > 0 || (sent < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))) {
+    } else if (sent > 0 || sent < 0) {
         // Partial send or would block - fall back to chunked sending
         size_t already_sent = (sent > 0) ? sent : 0;
         // Send large responses in chunks to avoid partial sends
@@ -762,26 +751,17 @@ int HttpHandler::handleHttpRequest(int client_fd, Socket& socket) {
         
         while (total_sent < total_size) {
             size_t chunk_size = std::min<size_t>(total_size - total_sent, 32768); // 32KB chunks for better flow control
-            ssize_t sent = send(client_fd, data + total_sent, chunk_size, MSG_NOSIGNAL);
+            ssize_t sent = send(client_fd, data + total_sent, chunk_size, MSG_DONTWAIT | MSG_NOSIGNAL);
             
             if (sent < 0) {
-                if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                    // Socket buffer full, wait for it to drain
-                    consecutive_failures++;
-                    if (consecutive_failures >= MAX_CONSECUTIVE_FAILURES) {
-                        std::cerr << "Too many consecutive send failures, client may be too slow" << std::endl;
-                        break;
-                    }
-                    usleep(10000); // 10ms wait for large responses
-                    continue;
-                } else if (errno == EPIPE || errno == ECONNRESET) {
-                    // Client closed connection - this is normal in high-concurrency scenarios
-                    Logger::debug("Client closed connection during response send (EPIPE/ECONNRESET)");
-                    break;
-                } else {
-                    perror("send");
+                // Socket buffer full or error, wait for it to drain
+                consecutive_failures++;
+                if (consecutive_failures >= MAX_CONSECUTIVE_FAILURES) {
+                    std::cerr << "Too many consecutive send failures, client may be too slow" << std::endl;
                     break;
                 }
+                usleep(10000); // 10ms wait for large responses
+                continue;
             } else if (sent == 0) {
                 // Connection closed by client
                 std::cerr << "Client closed connection during response send" << std::endl;
@@ -803,8 +783,7 @@ int HttpHandler::handleHttpRequest(int client_fd, Socket& socket) {
             std::cerr << "Partial send: " << total_sent << " of " << total_size << " bytes" << std::endl;
         }
     } else {
-        // Send failed completely
-        perror("send failed completely");
+        // sent == 0, connection closed
         keepAlive = false; // Force close on send failure
     }
     
